@@ -2,7 +2,7 @@
 
 This repository aims to clone BeatSaber in Unity.
 
-![beatsaberclone_v0.9](https://github.com/user-attachments/assets/e755aea6-eb2f-4ee6-b0a4-5b0e1b9e715c)
+![beatsaberclone_v0 9](https://github.com/user-attachments/assets/73c54e61-0cdc-463d-bd25-497e299d7395)
 
 ## Requirements
 
