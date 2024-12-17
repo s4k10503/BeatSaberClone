@@ -1,0 +1,23 @@
+{
+    "name": "Presentation",
+    "rootNamespace": "",
+    "references": [
+        "Domain",
+        "UseCase",
+        "UniTask",
+        "UniRx",
+        "Unity.TextMeshPro",
+        "DOTween.Modules",
+        "EzySlice",
+        "Zenject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
