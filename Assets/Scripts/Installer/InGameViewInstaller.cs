@@ -71,6 +71,18 @@ namespace BeatSaberClone.Installer
                 .FromInstance(_boxSettings.DestroyZCoordinates);
 
             Container
+                .Bind<float>()
+                .WithId("BoxRotationDuration")
+                .FromInstance(_boxSettings.RotationDuration);
+
+
+
+            Container
+                .Bind<float>()
+                .WithId("BoxRotationDelay")
+                .FromInstance(_boxSettings.RotationDelay);
+
+            Container
                 .Bind<IAudioVisualEffecter>()
                 .To<AudioVisualEffecter>()
                 .FromComponentInHierarchy()

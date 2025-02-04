@@ -1,8 +1,9 @@
+using System.Threading;
 using Zenject;
 
 namespace BeatSaberClone.Presentation
 {
-    public sealed class CustomBoxViewFactory : IFactory<int, float, float, BoxView>
+    public sealed class CustomBoxViewFactory : IFactory<int, BoxView>
     {
         private readonly BoxView.Factory _redBoxFactory;
         private readonly BoxView.Factory _blueBoxFactory;
@@ -15,13 +16,12 @@ namespace BeatSaberClone.Presentation
             _blueBoxFactory = blueBoxFactory;
         }
 
-        public BoxView Create(int type, float speed, float originalY)
+        public BoxView Create(int type)
         {
             var boxView = type == 0
                 ? _redBoxFactory.Create()
                 : _blueBoxFactory.Create();
 
-            boxView.SetParameters(type, speed, originalY);
             return boxView;
         }
     }

@@ -34,8 +34,6 @@ namespace BeatSaberClone.Presentation
         private readonly Subject<BoxView> _boxViewCreated = new();
         public IObservable<BoxView> BoxViewCreated => _boxViewCreated.AsObservable();
 
-        private readonly Subject<string> _onErrorOccurred = new();
-        public IObservable<string> OnErrorOccurred => _onErrorOccurred.AsObservable();
 
         [Inject]
         public void Construct(
@@ -58,7 +56,6 @@ namespace BeatSaberClone.Presentation
         private void OnDestroy()
         {
             _boxViewCreated?.Dispose();
-            _onErrorOccurred?.Dispose();
 
             _particleSpawnLeft = null;
             _particleSpawnRight = null;
@@ -74,8 +71,7 @@ namespace BeatSaberClone.Presentation
                 int spawnIndex = note._lineIndex + note._lineLayer * 4;
                 if (spawnIndex < 0 || spawnIndex >= _spawnPoints.Length)
                 {
-                    LogError($"Spawn index ({spawnIndex}) is out of bounds.");
-                    return;
+                    throw new ApplicationException($"Spawn index ({spawnIndex}) is out of bounds.");
                 }
 
                 // Pre-calculate spawn position
@@ -93,15 +89,14 @@ namespace BeatSaberClone.Presentation
                 }, cancellationToken: ct);
 
                 // Create box view and instance
-                var boxView = _boxViewFactory.Create(note._type, _moveSpeed, spawnPoint.position.y);
+                var boxView = _boxViewFactory.Create(note._type);
+                boxView.SetParameters(note._type, _moveSpeed, spawnPoint.position.y, note._cutDirection, ct);
+
                 GameObject boxInstance = boxView.gameObject;
 
                 // Apply position and rotation
                 Transform boxTransform = boxInstance.transform;
                 boxTransform.SetPositionAndRotation(spawnPosition, randomRotation);
-
-                // Initialize BoxView asynchronously
-                var animationTask = boxView.SetAnimation(note._cutDirection, ct);
 
                 // Start particle effect processing asynchronously
                 UniTask particleTask = UniTask.CompletedTask; // Default to a no-op task
@@ -114,15 +109,18 @@ namespace BeatSaberClone.Presentation
                     particleTask = TriggerParticleEffect(_particleSpawnRight, boxTransform.position, ct);
                 }
 
-                // Wait for all tasks to complete
-                await UniTask.WhenAll(animationTask, particleTask);
+                await particleTask;
 
                 // Notify observers
                 _boxViewCreated.OnNext(boxView);
             }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
             catch (Exception ex)
             {
-                LogError($"Failed to spawn note: {ex.Message}");
+                throw new ApplicationException("Failed to spawn note: ", ex);
             }
         }
 
@@ -139,13 +137,6 @@ namespace BeatSaberClone.Presentation
                 _maxPoolSize,
                 ct
             );
-        }
-
-        private void LogError(string message)
-        {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            _onErrorOccurred.OnNext(message);
-#endif
         }
     }
 }

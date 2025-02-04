@@ -274,20 +274,12 @@ namespace BeatSaberClone.Presentation
             _boxSpawner.BoxViewCreated
                 .Subscribe(SubscribeToBoxViewEvents)
                 .AddTo(_disposables);
-
-            _boxSpawner.OnErrorOccurred
-                .Subscribe(_viewLogUseCase.LogError)
-                .AddTo(_disposables);
         }
 
         private void SubscribeToBoxViewEvents(BoxView boxView)
         {
             boxView.OnComboReset
                 .Subscribe(_ => _scoreUseCase.UpdateCombo(0))
-                .AddTo(_disposables);
-
-            boxView.OnErrorOccurred
-                .Subscribe(_viewLogUseCase.LogError)
                 .AddTo(_disposables);
         }
 
