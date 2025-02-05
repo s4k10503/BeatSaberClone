@@ -7,7 +7,6 @@ namespace BeatSaberClone.Presentation
 {
     public sealed class MovementAnimationController : IMovementAnimationController
     {
-        private bool _isMoving;
         private bool _isRotating;
         private float _moveSpeed;
         private float _lerpSpeed;
@@ -16,46 +15,60 @@ namespace BeatSaberClone.Presentation
         private Quaternion _targetRotation;
 
 
-        public void InitializeMovement(float moveSpeed, float originalY, float initialXPosition, float lerpSpeed)
+        public void SetParameters(float moveSpeed, float originalY, float lerpSpeed)
         {
             _moveSpeed = moveSpeed;
             _originalY = originalY;
             _lerpSpeed = lerpSpeed;
-            _isMoving = true;
         }
 
-        public async UniTask StartRotationAsync(
+        public async UniTask InitializeRotationAsync(
             Transform transform,
             Quaternion targetRotation,
             float duration,
             float delaySeconds,
             CancellationToken ct)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
+            try
+            {
+                if (transform == null || transform.gameObject == null) return;
 
-            _targetRotation = targetRotation;
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
 
-            // Calculate the angle difference between the current rotation and the target rotation
-            float angleDifference = Quaternion.Angle(transform.rotation, _targetRotation);
+                _targetRotation = targetRotation;
 
-            // Calculate the rotation speed (angle/second)
-            _rotationSpeed = angleDifference / duration;
-            _isRotating = true;
+                // Calculate the angle difference between the current rotation and the target rotation
+                float angleDifference = Quaternion.Angle(transform.rotation, _targetRotation);
+
+                // Calculate the rotation speed (angle/second)
+                _rotationSpeed = angleDifference / duration;
+                _isRotating = true;
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("InitializeRotationAsync failed: ", ex);
+            }
         }
 
-        public void UpdateMovementAndRotation(Transform transform, float moveSpeed)
+        public void ApplyMovementAndRotation(Transform transform, float moveSpeed)
         {
             _moveSpeed = moveSpeed;
 
-            if (_isMoving)
-            {
-                MoveForward(transform);
-            }
+            MoveForward(transform);
 
             if (_isRotating)
             {
                 Rotate(transform);
             }
+        }
+
+        public void StopRotation()
+        {
+            _isRotating = false;
         }
 
         private void MoveForward(Transform transform)
@@ -73,6 +86,12 @@ namespace BeatSaberClone.Presentation
 
         private void Rotate(Transform transform)
         {
+            if (transform == null || transform.gameObject == null)
+            {
+                _isRotating = false;
+                return;
+            }
+
             // Calculate the angle difference between the current rotation and the target rotation
             float angleDifference = Quaternion.Angle(transform.rotation, _targetRotation);
 

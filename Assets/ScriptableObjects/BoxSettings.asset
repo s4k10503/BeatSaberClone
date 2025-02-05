@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7db223ee12634f04ba4fc726966d7fbe, type: 3}
   m_Name: BoxSettings
   m_EditorClassIdentifier: 
-  _initialMoveSpeed: 70
+  _initialMoveSpeed: 100
   _finalMoveSpeed: 10
-  _slowDownDistance: 10
+  _slowDownDistance: 15
   LerpSpeed: 5
   DestroyZCoordinates: -5
   DefaultOriginalY: 0
