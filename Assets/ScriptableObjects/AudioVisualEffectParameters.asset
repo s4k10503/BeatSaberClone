@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BaseFogColor: {r: 0, g: 0, b: 0, a: 1}
   TargetFogColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
-  IntensityScale: 100
+  MaxLightIntensity: 10
+  IntensityScale: 125
   ScaleMultiplier: 250
   LerpSpeed: 10

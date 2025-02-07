@@ -10,6 +10,7 @@ namespace BeatSaberClone.Presentation
         public Color TargetFogColor = Color.white;
 
         [Header("Effect Intensity")]
+        public float MaxLightIntensity = 3.0f;
         public float IntensityScale = 100.0f;
         public float ScaleMultiplier = 100.0f;
         public float LerpSpeed = 1.0f;
