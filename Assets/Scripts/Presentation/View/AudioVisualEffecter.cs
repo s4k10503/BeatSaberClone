@@ -10,7 +10,9 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private Material _targetMaterial;
         [SerializeField] private GameObject _parentObject1;
         [SerializeField] private GameObject _parentObject2;
+        [SerializeField] private Light _controlledLight;
 
+        private float _maxLightIntensity;
         private float _intensityScale;
         private Color _baseFogColor;
         private Color _targetFogColor;
@@ -25,18 +27,20 @@ namespace BeatSaberClone.Presentation
 
         [Inject]
         public void Construct(
-            [Inject(Id = "BaseFogColor")] Color baseFogColor,
-            [Inject(Id = "TargetFogColor")] Color targetFogColor,
+            [Inject(Id = "MaxLightIntensity")] float maxLightIntensity,
             [Inject(Id = "IntensityScale")] float intensityScale,
             [Inject(Id = "ScaleMultiplier")] float scaleMultiplier,
-            [Inject(Id = "VisualEffectLerpSpeed")] float lerpSpeed
+            [Inject(Id = "VisualEffectLerpSpeed")] float lerpSpeed,
+            [Inject(Id = "BaseFogColor")] Color baseFogColor,
+            [Inject(Id = "TargetFogColor")] Color targetFogColor
         )
         {
-            _baseFogColor = baseFogColor;
-            _targetFogColor = targetFogColor;
+            _maxLightIntensity = maxLightIntensity;
             _intensityScale = intensityScale;
             _scaleMultiplier = scaleMultiplier;
             _lerpSpeed = lerpSpeed;
+            _baseFogColor = baseFogColor;
+            _targetFogColor = targetFogColor;
         }
 
         public void Initialize()
@@ -54,7 +58,7 @@ namespace BeatSaberClone.Presentation
             }
             else
             {
-                Debug.LogError("There is no'_emissionColor 'property in the material.Check the settings for Shader Graph.");
+                throw new ApplicationException("There is no'_emissionColor 'property in the material.Check the settings for Shader Graph.");
             }
 
             InitializeCubeGroups(_parentObject1);
@@ -72,6 +76,7 @@ namespace BeatSaberClone.Presentation
             _targetMaterial = null;
             _parentObject1 = null;
             _parentObject2 = null;
+            _controlledLight = null;
         }
 
         private void InitializeCubeGroups(GameObject parentObject)
@@ -79,7 +84,7 @@ namespace BeatSaberClone.Presentation
             if (parentObject != null)
             {
                 var parentTransform = parentObject.transform;
-                List<GameObject> cubeGroup = new List<GameObject>(parentTransform.childCount);
+                List<GameObject> cubeGroup = new(parentTransform.childCount);
 
                 for (int i = 0; i < parentTransform.childCount; i++)
                 {
@@ -95,9 +100,15 @@ namespace BeatSaberClone.Presentation
             if (_isDestroyed) return;
 
             float intensity = Mathf.Clamp01(average * _intensityScale);
+            UpdateLightIntensity(intensity);
             UpdateFogColor(intensity);
             UpdateMaterialEmission(intensity);
             UpdateObjectScales(spectrumData);
+        }
+
+        private void UpdateLightIntensity(float intensity)
+        {
+            _controlledLight.intensity = intensity * _maxLightIntensity;
         }
 
         private void UpdateFogColor(float intensity)

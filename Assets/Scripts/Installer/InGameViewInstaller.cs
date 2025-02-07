@@ -111,6 +111,11 @@ namespace BeatSaberClone.Installer
                 .AsTransient();
 
             Container
+                .Bind<float>()
+                .WithId("MaxLightIntensity")
+                .FromInstance(_audioVisualEffectParameters.MaxLightIntensity);
+
+            Container
                 .Bind<Color>()
                 .WithId("BaseFogColor")
                 .FromInstance(_audioVisualEffectParameters.BaseFogColor);

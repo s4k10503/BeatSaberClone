@@ -146,7 +146,7 @@ Material:
     - _Show_Internal_On_Focus_: 0
     - _Shrink_On_Pinch_: 0
     - _Shrunk_Radius_Fraction_: 0.25
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -160,7 +160,7 @@ Material:
     - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
     - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _Color_: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0.2798083, g: 1.243854, b: 8.47419, a: 1}
+    - _EmissionColor: {r: 0, g: 2.0404744, b: 5.992157, a: 1}
     - _Inner_Color_: {r: 1, g: 1, b: 1, a: 1}
     - _Selection_Color_: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

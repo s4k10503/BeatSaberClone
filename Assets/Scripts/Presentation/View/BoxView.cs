@@ -80,7 +80,7 @@ namespace BeatSaberClone.Presentation
 
                 if (transform.position.z > _destroyZCoordinates)
                 {
-                    TriggerAnimation(_ct).Forget();
+                    TriggerAnimationAsync(_ct).Forget();
                 }
             }
 
@@ -105,17 +105,16 @@ namespace BeatSaberClone.Presentation
             _slicedObject = null;
         }
 
-        private async UniTask TriggerAnimation(CancellationToken ct)
+        private async UniTask TriggerAnimationAsync(CancellationToken ct)
         {
             if (_cachedGameObject == null || transform == null) return;
 
             // Supplies from current rotation to target rotation
             try
             {
-                _movementAnimationController
-                    .SetParameters(_moveSpeed, _originalY, _lerpSpeed);
-                await _movementAnimationController
-                    .InitializeRotationAsync(transform, _targetRotation, _rotationDuration, _rotationDelay, ct);
+                await UniTask.Delay(TimeSpan.FromSeconds(_rotationDelay), cancellationToken: ct);
+                _movementAnimationController.SetParameters(_moveSpeed, _originalY, _lerpSpeed);
+                _movementAnimationController.InitializeRotation(transform, _targetRotation, _rotationDuration);
             }
             catch (OperationCanceledException)
             {

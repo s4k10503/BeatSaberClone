@@ -167,10 +167,13 @@ namespace BeatSaberClone.Presentation
                     var spectrumData = await spectrumDataTask;
 
                     // Execute the processing of notes generation in parallel
-                    var spawnNotesTask = UniTask.WhenAll(
-                        notesToSpawn.Select(note => _boxSpawner.SpawnNote(note, _cts.Token))
-                    );
-                    await spawnNotesTask;
+                    var spawnTasks = new UniTask[notesToSpawn.Count];
+                    for (int i = 0; i < notesToSpawn.Count; i++)
+                    {
+                        spawnTasks[i] = _boxSpawner.SpawnNote(notesToSpawn[i], _cts.Token);
+                    }
+                    await UniTask.WhenAll(spawnTasks);
+
 
                     _audioVisualEffecter.UpdateEffect(averageSpectrum, spectrumData);
                 }
@@ -292,9 +295,11 @@ namespace BeatSaberClone.Presentation
 
         private void SubscribeToSlicerEvents(IObjectSlicer slicer)
         {
+            // Create Slicer specific delegates and cash
+            void onHit(GameObject hit) => HandleSlicerHit(slicer, hit);
             slicer.HitObject
                 .Where(hit => hit != null)
-                .Subscribe(hit => HandleSlicerHit(slicer, hit))
+                .Subscribe(onHit)
                 .AddTo(_disposables);
         }
 

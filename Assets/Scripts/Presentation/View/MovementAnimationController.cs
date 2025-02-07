@@ -14,7 +14,6 @@ namespace BeatSaberClone.Presentation
         private float _rotationSpeed;
         private Quaternion _targetRotation;
 
-
         public void SetParameters(float moveSpeed, float originalY, float lerpSpeed)
         {
             _moveSpeed = moveSpeed;
@@ -22,19 +21,15 @@ namespace BeatSaberClone.Presentation
             _lerpSpeed = lerpSpeed;
         }
 
-        public async UniTask InitializeRotationAsync(
+        public void InitializeRotation(
             Transform transform,
             Quaternion targetRotation,
-            float duration,
-            float delaySeconds,
-            CancellationToken ct)
+            float duration)
         {
+            if (transform == null || transform.gameObject == null) return;
+
             try
             {
-                if (transform == null || transform.gameObject == null) return;
-
-                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
-
                 _targetRotation = targetRotation;
 
                 // Calculate the angle difference between the current rotation and the target rotation
@@ -44,13 +39,9 @@ namespace BeatSaberClone.Presentation
                 _rotationSpeed = angleDifference / duration;
                 _isRotating = true;
             }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
             catch (Exception ex)
             {
-                throw new ApplicationException("InitializeRotationAsync failed: ", ex);
+                throw new ApplicationException("InitializeRotation failed: ", ex);
             }
         }
 
@@ -73,15 +64,22 @@ namespace BeatSaberClone.Presentation
 
         private void MoveForward(Transform transform)
         {
+            if (transform == null || transform.gameObject == null) return;
+
+            // Cash to local variables
+            float deltaTime = Time.deltaTime;
+            Vector3 position = transform.position;
+
             // Move in the axial direction
-            transform.position -= _moveSpeed * Time.deltaTime * Vector3.forward;
+            position -= _moveSpeed * deltaTime * Vector3.forward;
 
             // Supreme y coordinates and return to their original position
-            if (!Mathf.Approximately(transform.position.y, _originalY))
+            if (!Mathf.Approximately(position.y, _originalY))
             {
-                var newY = Mathf.Lerp(transform.position.y, _originalY, Time.deltaTime * _lerpSpeed);
-                transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+                position.y = Mathf.Lerp(position.y, _originalY, deltaTime * _lerpSpeed);
             }
+
+            transform.position = position;
         }
 
         private void Rotate(Transform transform)
@@ -92,16 +90,20 @@ namespace BeatSaberClone.Presentation
                 return;
             }
 
+            // Cash to local variables
+            float deltaTime = Time.deltaTime;
+            Quaternion currentRotation = transform.rotation;
+
             // Calculate the angle difference between the current rotation and the target rotation
-            float angleDifference = Quaternion.Angle(transform.rotation, _targetRotation);
+            float angleDifference = Quaternion.Angle(currentRotation, _targetRotation);
 
             if (angleDifference > 0.1f)
             {
                 // Close to the target based on the rotation speed
                 transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
+                    currentRotation,
                     _targetRotation,
-                    _rotationSpeed * Time.deltaTime
+                    _rotationSpeed * deltaTime
                 );
             }
             else
