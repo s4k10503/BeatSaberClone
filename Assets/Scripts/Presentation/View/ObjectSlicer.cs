@@ -64,7 +64,7 @@ namespace BeatSaberClone.Presentation
             _maxPoolSize = _particleEffectSettings.MaxPoolSize;
         }
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             // Fix: Comment out because the drawing position of the trail is strange
             // await _trailGenerator.Initialize(_tip.transform, _base.transform, _meshParent, _numVerticesPerFrame, _trailFrameLength, ct);
@@ -73,9 +73,9 @@ namespace BeatSaberClone.Presentation
             gameObject.SetActive(true);
         }
 
-        public void UpdateTrail()
+        public async UniTask UpdateTrailAsync(CancellationToken ct)
         {
-            // _trailGenerator.UpdateTrail();
+            await _trailGenerator.UpdateTrailAsync(ct);
         }
 
         private void OnDestroy()
@@ -90,19 +90,20 @@ namespace BeatSaberClone.Presentation
             _particleEffect = null;
         }
 
-        public void SliceDetection(CancellationToken ct)
+        public async UniTask SliceDetectionAsync(CancellationToken ct)
         {
             if (_sliceDetector?.CheckForSlice(out GameObject slicedObject) == true)
             {
-                ProcessSlice(slicedObject, ct);
+                await ProcessSliceAsync(slicedObject, ct);
             }
         }
 
-        private void ProcessSlice(GameObject slicedObject, CancellationToken ct)
+        private async UniTask ProcessSliceAsync(GameObject slicedObject, CancellationToken ct)
         {
-            CalculateSliceData();
             _hitObject.Value = slicedObject;
-            _particleEffectHandler?.TriggerParticleEffect(
+            CalculateSliceData();
+
+            await _particleEffectHandler.TriggerParticleEffectAsync(
                 _particleEffect,
                 transform.position,
                 Quaternion.identity,

@@ -16,8 +16,8 @@ namespace BeatSaberClone.Presentation
         Vector3 SliceDirection { get; }
         Vector3 Velocity { get; }
 
-        UniTask Initialize(CancellationToken ct);
-        void SliceDetection(CancellationToken ct);
-        void UpdateTrail();
+        UniTask InitializeAsync(CancellationToken ct);
+        UniTask SliceDetectionAsync(CancellationToken ct);
+        UniTask UpdateTrailAsync(CancellationToken ct);
     }
 }

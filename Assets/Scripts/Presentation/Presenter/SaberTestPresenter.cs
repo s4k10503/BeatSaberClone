@@ -34,7 +34,7 @@ namespace BeatSaberClone.Presentation
 
         void IInitializable.Initialize()
         {
-            _objectSlicerR.Initialize(_cts.Token).Forget();
+            _objectSlicerR.InitializeAsync(_cts.Token).Forget();
             SubscribeToSlicer(_objectSlicerR);
         }
 
@@ -44,12 +44,12 @@ namespace BeatSaberClone.Presentation
 
         void IFixedTickable.FixedTick()
         {
-            _objectSlicerR.SliceDetection(_cts.Token);
+            _objectSlicerR.SliceDetectionAsync(_cts.Token);
         }
 
         void ILateTickable.LateTick()
         {
-            _objectSlicerR.UpdateTrail();
+            _objectSlicerR.UpdateTrailAsync(_cts.Token);
         }
 
         public void Dispose()

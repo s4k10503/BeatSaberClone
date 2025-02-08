@@ -6,7 +6,7 @@ namespace BeatSaberClone.Presentation
 {
     public interface IParticleEffectHandler
     {
-        UniTask TriggerParticleEffect(
+        UniTask TriggerParticleEffectAsync(
             GameObject particlePrefab,
             Vector3 position,
             Quaternion rotation,

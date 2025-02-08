@@ -128,7 +128,7 @@ namespace BeatSaberClone.Presentation
         {
             Quaternion particleRotation = Quaternion.Euler(-90, 0, 0);
 
-            await _particleEffectHandler.TriggerParticleEffect(
+            await _particleEffectHandler.TriggerParticleEffectAsync(
                 particlePrefab,
                 position,
                 particleRotation,
