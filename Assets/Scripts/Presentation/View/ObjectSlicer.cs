@@ -1,7 +1,6 @@
 using UnityEngine;
 using UniRx;
 using BeatSaberClone.Domain;
-using BeatSaberClone.UseCase;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;

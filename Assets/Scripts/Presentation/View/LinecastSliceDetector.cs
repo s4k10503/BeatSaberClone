@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BeatSaberClone.UseCase
+namespace BeatSaberClone.Presentation
 {
     public sealed class LinecastSliceDetector : ISliceDetector
     {
