@@ -665,7 +665,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89715ad69b973a14899afa2c6730b30b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _scriptableObjectInstallers: []
+  _scriptableObjectInstallers:
+  - {fileID: 11400000, guid: 6203238a72699714b8abc1b85c6037a7, type: 2}
   _monoInstallers:
   - {fileID: 406872901}
   - {fileID: 1065511340}
@@ -713,6 +714,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1014105094 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4405286909149688417, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+  m_PrefabInstance: {fileID: 8910234793028244221}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1032711902 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4073514104559277381, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
@@ -1498,8 +1504,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _targetMaterial: {fileID: 2100000, guid: cfbc097d0acd0b144af5e346339c4665, type: 2}
-  _parentObject1: {fileID: 1239846532}
-  _parentObject2: {fileID: 1462139914}
+  _parentPillarObject1: {fileID: 1239846532}
+  _parentPillarObject2: {fileID: 1462139914}
+  _parentRingObject: {fileID: 1014105094}
   _controlledLight: {fileID: 1128154606}
 --- !u!1001 &2018739805
 PrefabInstance:
