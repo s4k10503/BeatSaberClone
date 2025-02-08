@@ -32,8 +32,7 @@ namespace BeatSaberClone.Installer
                 .AsSingle();
 
             Container
-                .Bind<ISlicedObject>()
-                .To<SlicedObject>()
+                .BindInterfacesTo<BoxView>()
                 .FromNew()
                 .AsSingle();
 

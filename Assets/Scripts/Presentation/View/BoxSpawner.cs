@@ -1,3 +1,4 @@
+using BeatSaberClone.Domain;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -5,7 +6,7 @@ using UniRx;
 using Zenject;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using BeatSaberClone.Domain;
+using System.Collections.Generic;
 
 namespace BeatSaberClone.Presentation
 {
@@ -17,40 +18,78 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private Transform _playerPoint;
         [SerializeField] private Transform[] _spawnPoints;
 
-        [Header("Particle Effect Settings")]
-        [SerializeField] private ParticleEffectSettings _particleEffectSettings;
+        private readonly List<BoxView> _activeBoxViews = new();
 
+        private Vector3 _particleRotation;
         private float _particleDelaytime;
         private int _defaultPoolCapacity;
-        private int _maxPoolSize;
-        private CustomBoxViewFactory _boxViewFactory;
+        private int _maxParticlePoolSize;
+        private CustomBoxViewPool _boxViewPool;
         private IParticleEffectHandler _particleEffectHandler;
 
         public Transform PlayerPoint => _playerPoint;
         public Transform[] SpawnPoints => _spawnPoints;
         private float _lowestY;
-        private float _moveSpeed;
+        private float _maxDeviation;
+
+        public MovementSettings MovementSettings { get; set; }
+        private RotationSettings _rotationSettings;
+        private DestroySettings _destroySettings;
+        private SlicedSettings _slicedSettings;
 
         private readonly Subject<BoxView> _boxViewCreated = new();
         public IObservable<BoxView> BoxViewCreated => _boxViewCreated.AsObservable();
 
-
         [Inject]
         public void Construct(
             IParticleEffectHandler particleEffectHandler,
-            CustomBoxViewFactory boxViewFactory,
-            [Inject(Id = "BoxInitialMoveSpeed")] float moveSpeed)
+            CustomBoxViewPool boxViewFactory,
+            BoxSettings boxSettings,
+            ParticleEffectSettings particleEffectSettings)
         {
             _particleEffectHandler = particleEffectHandler;
-            _boxViewFactory = boxViewFactory;
+            _boxViewPool = boxViewFactory;
 
-            _moveSpeed = moveSpeed;
-            _particleDelaytime = _particleEffectSettings.ParticleDelayTime;
-            _defaultPoolCapacity = _particleEffectSettings.DefaultPoolCapacity;
-            _maxPoolSize = _particleEffectSettings.MaxPoolSize;
+            _particleRotation = boxSettings.ParticleEffectRotation;
+            _maxDeviation = boxSettings.MaxRotationDeviation;
 
-            // Determine the Y coordinate of the bottom point
-            _lowestY = _spawnPoints.Min(sp => sp.position.y);
+            _particleDelaytime = particleEffectSettings.ParticleDelayTime;
+            _defaultPoolCapacity = particleEffectSettings.DefaultPoolCapacity;
+            _maxParticlePoolSize = particleEffectSettings.MaxPoolSize;
+
+            MovementSettings = new MovementSettings
+            {
+                LerpSpeed = boxSettings.LerpSpeed,
+                InitialMoveSpeed = boxSettings.InitialMoveSpeed,
+                FinalMoveSpeed = boxSettings.FinalMoveSpeed,
+                SlowDownDistance = boxSettings.SlowDownDistance,
+                LowestY = boxSettings.LowestY
+            };
+
+            _rotationSettings = new RotationSettings
+            {
+                RotationDuration = boxSettings.RotationDuration,
+                RotationDelayTime = boxSettings.RotationDelayTime
+            };
+
+            _destroySettings = new DestroySettings
+            {
+                DestroyZCoordinates = boxSettings.DestroyZCoordinates,
+                DestroyDelayTime = boxSettings.DestroyDelayTime
+            };
+
+            _slicedSettings = new SlicedSettings
+            {
+                DownRotationZ = boxSettings.DownRotationZ,
+                UpRotationZ = boxSettings.UpRotationZ,
+                RightRotationZ = boxSettings.RightRotationZ,
+                LeftRotationZ = boxSettings.LeftRotationZ,
+                DownDirection = boxSettings.DownDirection,
+                UpDirection = boxSettings.UpDirection,
+                RightDirection = boxSettings.RightDirection,
+                LeftDirection = boxSettings.LeftDirection,
+                AllowedAngle = boxSettings.AllowedAngle
+            };
         }
 
         private void OnDestroy()
@@ -76,26 +115,37 @@ namespace BeatSaberClone.Presentation
 
                 // Pre-calculate spawn position
                 Transform spawnPoint = _spawnPoints[spawnIndex];
-                Vector3 spawnPosition = new(spawnPoint.position.x, _lowestY, spawnPoint.position.z);
+                Vector3 spawnPosition = new(spawnPoint.position.x, MovementSettings.LowestY, spawnPoint.position.z);
 
                 Quaternion randomRotation = await UniTask.RunOnThreadPool(() =>
                 {
                     var random = new System.Random();
                     return Quaternion.Euler(
-                        (float)random.NextDouble() * 30f - 15f, // X axis (-15 to 15)
-                        (float)random.NextDouble() * 30f - 15f, // Y axis (-15 to 15)
-                        (float)random.NextDouble() * 30f - 15f  // Z axis (-15 to 15)
+                        (float)random.NextDouble() * _maxDeviation * 2f - _maxDeviation,
+                        (float)random.NextDouble() * _maxDeviation * 2f - _maxDeviation,
+                        (float)random.NextDouble() * _maxDeviation * 2f - _maxDeviation
                     );
                 }, cancellationToken: ct);
 
-                // Create box view and instance
-                var boxView = _boxViewFactory.Create(note._type);
-                boxView.SetParameters(note._type, _moveSpeed, spawnPoint.position.y, note._cutDirection, ct);
+                // Create spawnSettings for BoxView
+                var spawnSettings = new SpawnSettings
+                {
+                    Type = note._type,
+                    OriginalY = spawnPoint.position.y,
+                    CutDirection = note._cutDirection,
+                    Ct = ct,
+                    MovementSettings = MovementSettings,
+                    RotationSettings = _rotationSettings,
+                    DestroySettings = _destroySettings,
+                    SlicedSettings = _slicedSettings
+                };
 
-                GameObject boxInstance = boxView.gameObject;
+                // Create box view and instance
+                var boxView = _boxViewPool.Create(spawnSettings);
+                _activeBoxViews.Add(boxView);
 
                 // Apply position and rotation
-                Transform boxTransform = boxInstance.transform;
+                Transform boxTransform = boxView.gameObject.transform;
                 boxTransform.SetPositionAndRotation(spawnPosition, randomRotation);
 
                 // Start particle effect processing asynchronously
@@ -126,17 +176,27 @@ namespace BeatSaberClone.Presentation
 
         private async UniTask TriggerParticleEffect(GameObject particlePrefab, Vector3 position, CancellationToken ct)
         {
-            Quaternion particleRotation = Quaternion.Euler(-90, 0, 0);
+            Quaternion particleRotation = Quaternion.Euler(_particleRotation);
 
-            await _particleEffectHandler.TriggerParticleEffect(
+            await _particleEffectHandler.TriggerParticleEffectAsync(
                 particlePrefab,
                 position,
                 particleRotation,
                 _particleDelaytime,
                 _defaultPoolCapacity,
-                _maxPoolSize,
+                _maxParticlePoolSize,
                 ct
             );
+        }
+
+        public void RemoveBoxView()
+        {
+            if (_activeBoxViews.Count > 0)
+            {
+                var boxView = _activeBoxViews[0];
+                boxView.ReturnToPool();
+                _activeBoxViews.RemoveAt(0);
+            }
         }
     }
 }

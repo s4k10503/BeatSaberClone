@@ -320,7 +320,7 @@ MonoBehaviour:
   _tip: {fileID: 5154340676360960378}
   _base: {fileID: 5553884058724082860}
   _meshParent: {fileID: 678196475455708052}
-  _trailSettings: {fileID: 11400000, guid: d5762c379ddd94c43a6a7268d5392326, type: 2}
+  _slicerSettings: {fileID: 11400000, guid: d5762c379ddd94c43a6a7268d5392326, type: 2}
   _particleEffectSettings: {fileID: 11400000, guid: 45507438792c4d743a38b0831fc1e28e, type: 2}
 --- !u!114 &3291000020651977332
 MonoBehaviour:

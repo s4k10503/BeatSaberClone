@@ -17,7 +17,7 @@ namespace BeatSaberClone.Presentation
             _particlePools = null;
         }
 
-        public async UniTask TriggerParticleEffect(
+        public async UniTask TriggerParticleEffectAsync(
             GameObject particlePrefab,
             Vector3 position,
             Quaternion rotation,

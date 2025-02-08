@@ -1,9 +1,10 @@
 using UnityEngine;
+using Zenject;
 
 namespace BeatSaberClone.Presentation
 {
     [CreateAssetMenu(fileName = "ParticleEffectSettings", menuName = "BeatSaberClone/ParticleEffectSettings")]
-    public class ParticleEffectSettings : ScriptableObject
+    public class ParticleEffectSettings : ScriptableObjectInstaller
     {
         [Header("Particle Pool Settings")]
         public int DefaultPoolCapacity = 4;
@@ -11,5 +12,10 @@ namespace BeatSaberClone.Presentation
 
         [Header("Particle Effect Timing")]
         public float ParticleDelayTime = 0.0f;
+
+        public override void InstallBindings()
+        {
+            Container.BindInstance(this);
+        }
     }
 }

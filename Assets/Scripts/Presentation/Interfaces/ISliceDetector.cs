@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BeatSaberClone.UseCase
+namespace BeatSaberClone.Presentation
 {
     public interface ISliceDetector : IDisposable
     {

@@ -19,7 +19,7 @@ namespace BeatSaberClone.Presentation
         private Vector3 _previousTipPosition;
         private Vector3 _previousBasePosition;
 
-        public async UniTask Initialize(
+        public async UniTask InitializeAsync(
             Transform tipTransform,
             Transform baseTransform,
             GameObject meshParent,
@@ -80,8 +80,10 @@ namespace BeatSaberClone.Presentation
             _previousBasePosition = _baseTransform.position;
         }
 
-        public void UpdateTrail()
+        public async UniTask UpdateTrailAsync(CancellationToken ct)
         {
+            await UniTask.Yield();
+
             if (_frameCount >= _trailFrameLength * _numVerticesPerFrame)
             {
                 _frameCount = 0;

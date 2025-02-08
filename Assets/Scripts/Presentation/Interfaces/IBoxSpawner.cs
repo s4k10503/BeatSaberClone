@@ -11,6 +11,7 @@ namespace BeatSaberClone.Presentation
         Transform PlayerPoint { get; }
         Transform[] SpawnPoints { get; }
         IObservable<BoxView> BoxViewCreated { get; }
+        MovementSettings MovementSettings { get; }
 
         UniTask SpawnNote(NoteInfo note, CancellationToken ct);
     }

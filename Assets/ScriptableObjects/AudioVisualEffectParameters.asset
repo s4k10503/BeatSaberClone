@@ -12,9 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8f32e40ab7d1074781144e6b11eafbd, type: 3}
   m_Name: AudioVisualEffectParameters
   m_EditorClassIdentifier: 
-  BaseFogColor: {r: 0, g: 0, b: 0, a: 1}
-  TargetFogColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
-  MaxLightIntensity: 10
   IntensityScale: 125
+  BaseColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
+  FlashColor: {r: 0.7490196, g: 0.03529412, b: 0.11764706, a: 1}
+  MaxLightIntensity: 10
   ScaleMultiplier: 250
   LerpSpeed: 10
+  RotationAngleMultiplier: 180
+  RotationThreshold: 1
+  DurationPerChild: 0.5
+  DelayBetweenChildren: 0.1
