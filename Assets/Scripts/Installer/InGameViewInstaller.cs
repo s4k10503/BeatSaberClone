@@ -109,36 +109,6 @@ namespace BeatSaberClone.Installer
             Container
                 .BindInterfacesTo<TrailGenerator>()
                 .AsTransient();
-
-            Container
-                .Bind<float>()
-                .WithId("MaxLightIntensity")
-                .FromInstance(_audioVisualEffectParameters.MaxLightIntensity);
-
-            Container
-                .Bind<Color>()
-                .WithId("BaseFogColor")
-                .FromInstance(_audioVisualEffectParameters.BaseFogColor);
-
-            Container
-                .Bind<Color>()
-                .WithId("TargetFogColor")
-                .FromInstance(_audioVisualEffectParameters.TargetFogColor);
-
-            Container
-                .Bind<float>()
-                .WithId("IntensityScale")
-                .FromInstance(_audioVisualEffectParameters.IntensityScale);
-
-            Container
-                .Bind<float>()
-                .WithId("ScaleMultiplier")
-                .FromInstance(_audioVisualEffectParameters.ScaleMultiplier);
-
-            Container
-                .Bind<float>()
-                .WithId("VisualEffectLerpSpeed")
-                .FromInstance(_audioVisualEffectParameters.LerpSpeed);
         }
     }
 }

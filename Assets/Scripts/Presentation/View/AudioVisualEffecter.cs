@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using Zenject;
 
@@ -8,39 +9,50 @@ namespace BeatSaberClone.Presentation
     public sealed class AudioVisualEffecter : MonoBehaviour, IAudioVisualEffecter
     {
         [SerializeField] private Material _targetMaterial;
-        [SerializeField] private GameObject _parentObject1;
-        [SerializeField] private GameObject _parentObject2;
+        [SerializeField] private GameObject _parentPillarObject1;
+        [SerializeField] private GameObject _parentPillarObject2;
+        [SerializeField] private GameObject _parentRingObject;
         [SerializeField] private Light _controlledLight;
 
-        private float _maxLightIntensity;
+        private AudioVisualEffectParameters _audioVisualEffectParameters;
+
         private float _intensityScale;
+
+        private float _maxLightIntensity;
+
         private Color _baseFogColor;
         private Color _targetFogColor;
         private float _scaleMultiplier;
         private float _lerpSpeed;
 
-        private List<List<GameObject>> _cubeGroups = new();
+        private float _rotationAngleMultiplier;
+        private float _rotationThreshold;
+        private float _durationPerChild;
+        private float _delayBetweenChildren;
+
+        private List<List<GameObject>> _pillarGroups = new();
+        private List<GameObject> _ringGroup = new();
         private Color _baseEmissionColor;
         private Color _currentEmissionColor;
 
+        private bool _isRotating = false;
         private bool _isDestroyed = false;
 
         [Inject]
-        public void Construct(
-            [Inject(Id = "MaxLightIntensity")] float maxLightIntensity,
-            [Inject(Id = "IntensityScale")] float intensityScale,
-            [Inject(Id = "ScaleMultiplier")] float scaleMultiplier,
-            [Inject(Id = "VisualEffectLerpSpeed")] float lerpSpeed,
-            [Inject(Id = "BaseFogColor")] Color baseFogColor,
-            [Inject(Id = "TargetFogColor")] Color targetFogColor
-        )
+        public void Construct(AudioVisualEffectParameters audioVisualEffectParameters)
         {
-            _maxLightIntensity = maxLightIntensity;
-            _intensityScale = intensityScale;
-            _scaleMultiplier = scaleMultiplier;
-            _lerpSpeed = lerpSpeed;
-            _baseFogColor = baseFogColor;
-            _targetFogColor = targetFogColor;
+            _audioVisualEffectParameters = audioVisualEffectParameters;
+
+            _intensityScale = _audioVisualEffectParameters.IntensityScale;
+            _maxLightIntensity = _audioVisualEffectParameters.MaxLightIntensity;
+            _baseFogColor = _audioVisualEffectParameters.BaseFogColor;
+            _targetFogColor = _audioVisualEffectParameters.TargetFogColor;
+            _scaleMultiplier = _audioVisualEffectParameters.ScaleMultiplier;
+            _lerpSpeed = _audioVisualEffectParameters.LerpSpeed;
+            _rotationAngleMultiplier = _audioVisualEffectParameters.RotationAngleMultiplier;
+            _rotationThreshold = _audioVisualEffectParameters.RotationThreshold;
+            _durationPerChild = _audioVisualEffectParameters.DurationPerChild;
+            _delayBetweenChildren = _audioVisualEffectParameters.DelayBetweenChildren;
         }
 
         public void Initialize()
@@ -61,8 +73,9 @@ namespace BeatSaberClone.Presentation
                 throw new ApplicationException("There is no'_emissionColor 'property in the material.Check the settings for Shader Graph.");
             }
 
-            InitializeCubeGroups(_parentObject1);
-            InitializeCubeGroups(_parentObject2);
+            InitializePillarGroups(_parentPillarObject1);
+            InitializePillarGroups(_parentPillarObject2);
+            InitializeRingGroup(_parentRingObject);
         }
 
         private void OnDestroy()
@@ -74,12 +87,12 @@ namespace BeatSaberClone.Presentation
 
             _isDestroyed = true;
             _targetMaterial = null;
-            _parentObject1 = null;
-            _parentObject2 = null;
+            _parentPillarObject1 = null;
+            _parentPillarObject2 = null;
             _controlledLight = null;
         }
 
-        private void InitializeCubeGroups(GameObject parentObject)
+        private void InitializePillarGroups(GameObject parentObject)
         {
             if (parentObject != null)
             {
@@ -91,7 +104,20 @@ namespace BeatSaberClone.Presentation
                     cubeGroup.Add(parentTransform.GetChild(i).gameObject);
                 }
 
-                _cubeGroups.Add(cubeGroup);
+                _pillarGroups.Add(cubeGroup);
+            }
+        }
+
+        private void InitializeRingGroup(GameObject parentObject)
+        {
+            if (parentObject != null)
+            {
+                var parentTransform = parentObject.transform;
+                _ringGroup = new List<GameObject>(parentTransform.childCount);
+                for (int i = 0; i < parentTransform.childCount; i++)
+                {
+                    _ringGroup.Add(parentTransform.GetChild(i).gameObject);
+                }
             }
         }
 
@@ -103,7 +129,8 @@ namespace BeatSaberClone.Presentation
             UpdateLightIntensity(intensity);
             UpdateFogColor(intensity);
             UpdateMaterialEmission(intensity);
-            UpdateObjectScales(spectrumData);
+            UpdatePillarScales(spectrumData);
+            UpdateRingRotation(intensity);
         }
 
         private void UpdateLightIntensity(float intensity)
@@ -130,14 +157,14 @@ namespace BeatSaberClone.Presentation
             }
         }
 
-        private void UpdateObjectScales(float[] spectrumData)
+        private void UpdatePillarScales(float[] spectrumData)
         {
             if (spectrumData == null || spectrumData.Length == 0)
                 return;
 
-            for (int groupIndex = 0; groupIndex < _cubeGroups.Count; groupIndex++)
+            for (int groupIndex = 0; groupIndex < _pillarGroups.Count; groupIndex++)
             {
-                List<GameObject> cubeGroup = _cubeGroups[groupIndex];
+                List<GameObject> cubeGroup = _pillarGroups[groupIndex];
                 UpdateCubeGroupScales(cubeGroup, spectrumData);
             }
         }
@@ -148,11 +175,11 @@ namespace BeatSaberClone.Presentation
 
             for (int i = 0; i < limit; i++)
             {
-                UpdateCubeScale(cubeGroup[i], spectrumData[i]);
+                UpdatePillarScale(cubeGroup[i], spectrumData[i]);
             }
         }
 
-        private void UpdateCubeScale(GameObject cube, float spectrumValue)
+        private void UpdatePillarScale(GameObject cube, float spectrumValue)
         {
             float intensity = spectrumValue * _scaleMultiplier;
             float currentScaleY = cube.transform.localScale.y;
@@ -164,6 +191,37 @@ namespace BeatSaberClone.Presentation
                     cube.transform.localScale.x,
                     newScaleY,
                     cube.transform.localScale.z);
+            }
+        }
+
+        private void UpdateRingRotation(float intensity)
+        {
+            // Note: It is a temporary process
+            // It seems that it should be executed at the time of the score, like in Notes.
+            if (intensity >= _rotationThreshold && !_isRotating && _ringGroup.Count > 0)
+            {
+                _isRotating = true;
+
+                // Create a DOTween Sequence and rotate each child object in the ring group in turn
+                Sequence rotationSequence = DOTween.Sequence();
+
+                for (int i = 0; i < _ringGroup.Count; i++)
+                {
+                    GameObject child = _ringGroup[i];
+
+                    // Set the Tween of each object to start at the timing of i * delayBetweenChildren in the sequence
+                    rotationSequence.Insert(
+                        i * _delayBetweenChildren,
+                        child.transform.DOLocalRotate(
+                            new Vector3(0f, 0f, _rotationAngleMultiplier),
+                            _durationPerChild,
+                            RotateMode.LocalAxisAdd
+                            ).SetEase(Ease.OutQuad)
+                    );
+                }
+
+                rotationSequence.OnComplete(() => { _isRotating = false; });
+                rotationSequence.Play();
             }
         }
     }
