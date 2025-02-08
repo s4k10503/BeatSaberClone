@@ -31,7 +31,7 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private GameObject _tip;
         [SerializeField] private GameObject _base;
         [SerializeField] private GameObject _meshParent;
-        [SerializeField] private TrailSettings _trailSettings;
+        [SerializeField] private SlicerSettings _slicerSettings;
         private int _numVerticesPerFrame;
         private int _trailFrameLength;
 
@@ -52,11 +52,17 @@ namespace BeatSaberClone.Presentation
             ITrailGenerator trailGenerator)
         {
             TipTransform = _tip.transform;
-            _sliceDetector = new LinecastSliceDetector(_base.transform, _tip.transform, _slicableLayer);
+
+            _sliceDetector = new SphereCastSliceDetector(
+                _base.transform,
+                _tip.transform,
+                _slicableLayer,
+                _slicerSettings.DetectionRadius,
+                _slicerSettings.InterpolationSteps);
 
             _trailGenerator = trailGenerator;
-            _numVerticesPerFrame = _trailSettings.NumVerticesPerFrame;
-            _trailFrameLength = _trailSettings.TrailFrameLength;
+            _numVerticesPerFrame = _slicerSettings.NumVerticesPerFrame;
+            _trailFrameLength = _slicerSettings.TrailFrameLength;
 
             _particleEffectHandler = particleEffectHandler;
             _particleDelaytime = _particleEffectSettings.ParticleDelayTime;
