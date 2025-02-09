@@ -8,23 +8,24 @@ namespace BeatSaberClone.Presentation
 {
     public sealed class AudioVisualEffecter : MonoBehaviour, IAudioVisualEffecter
     {
-        [SerializeField] private Material _targetMaterial;
-        [SerializeField] private GameObject _parentPillarObject1;
-        [SerializeField] private GameObject _parentPillarObject2;
+        [Header("Material Settings")]
+        [SerializeField] private Material _luminousMaterial;
+        [SerializeField] private Material _smokeMaterial;
+
+        [Header("Level Settings")]
+        [SerializeField] private Light _directionalLight;
+        [SerializeField] private GameObject _parentPillarObjectL;
+        [SerializeField] private GameObject _parentPillarObjectR;
         [SerializeField] private GameObject _parentRingObject;
-        [SerializeField] private Light _controlledLight;
 
         private AudioVisualEffectParameters _audioVisualEffectParameters;
 
+        private Color _baseColor;
+        private Color _flashColor;
         private float _intensityScale;
 
-        private float _maxLightIntensity;
-
-        private Color _baseFogColor;
-        private Color _targetFogColor;
         private float _scaleMultiplier;
         private float _lerpSpeed;
-
         private float _rotationAngleMultiplier;
         private float _rotationThreshold;
         private float _durationPerChild;
@@ -32,174 +33,347 @@ namespace BeatSaberClone.Presentation
 
         private List<List<GameObject>> _pillarGroups = new();
         private List<GameObject> _ringGroup = new();
-        private Color _baseEmissionColor;
-        private Color _currentEmissionColor;
 
+        private Color _baseLightColor;
+
+        // Structures for integrating fields of luminescent information
+        private struct EmissionInfo
+        {
+            public Color OriginalColor; // Early Emission Color (for restore with OnDestroy)
+            public float Intensity;     // Initial Intensity (Maximum Ingredients)
+            public Color Normalized;    // Normalized color (divided by Intensity)
+        }
+
+        private EmissionInfo _luminousEmission;
+        private EmissionInfo _smokeEmission;
+
+        private bool _previousIntensityWasOne = false;
+        private bool _isFlashActive = false;
         private bool _isRotating = false;
-        private bool _isDestroyed = false;
 
         [Inject]
         public void Construct(AudioVisualEffectParameters audioVisualEffectParameters)
         {
-            _audioVisualEffectParameters = audioVisualEffectParameters;
+            try
+            {
+                _audioVisualEffectParameters = audioVisualEffectParameters;
 
-            _intensityScale = _audioVisualEffectParameters.IntensityScale;
-            _maxLightIntensity = _audioVisualEffectParameters.MaxLightIntensity;
-            _baseFogColor = _audioVisualEffectParameters.BaseFogColor;
-            _targetFogColor = _audioVisualEffectParameters.TargetFogColor;
-            _scaleMultiplier = _audioVisualEffectParameters.ScaleMultiplier;
-            _lerpSpeed = _audioVisualEffectParameters.LerpSpeed;
-            _rotationAngleMultiplier = _audioVisualEffectParameters.RotationAngleMultiplier;
-            _rotationThreshold = _audioVisualEffectParameters.RotationThreshold;
-            _durationPerChild = _audioVisualEffectParameters.DurationPerChild;
-            _delayBetweenChildren = _audioVisualEffectParameters.DelayBetweenChildren;
+                _baseColor = _audioVisualEffectParameters.BaseColor;
+                _flashColor = _audioVisualEffectParameters.FlashColor;
+
+                _intensityScale = _audioVisualEffectParameters.IntensityScale;
+                _scaleMultiplier = _audioVisualEffectParameters.ScaleMultiplier;
+                _lerpSpeed = _audioVisualEffectParameters.LerpSpeed;
+
+                _rotationAngleMultiplier = _audioVisualEffectParameters.RotationAngleMultiplier;
+                _rotationThreshold = _audioVisualEffectParameters.RotationThreshold;
+                _durationPerChild = _audioVisualEffectParameters.DurationPerChild;
+                _delayBetweenChildren = _audioVisualEffectParameters.DelayBetweenChildren;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in Construct: " + ex);
+            }
         }
 
         public void Initialize()
         {
-            if (_isDestroyed) return;
-
-            RenderSettings.fog = true;
-
-            // Check if the material has an emission property
-            if (_targetMaterial.HasProperty("_EmissionColor"))
+            try
             {
-                // Enable Emotion Keywords
-                _targetMaterial.EnableKeyword("_EMISSION");
-                _baseEmissionColor = _targetMaterial.GetColor("_EmissionColor");
+                RenderSettings.fog = true;
+
+                InitializeMaterial(_luminousMaterial, isLuminous: true);
+                InitializeMaterial(_smokeMaterial, isLuminous: false);
+
+                if (_directionalLight != null)
+                    _baseLightColor = _directionalLight.color;
+
+                if (_parentPillarObjectL != null)
+                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectL));
+                if (_parentPillarObjectR != null)
+                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectR));
+                if (_parentRingObject != null)
+                    _ringGroup = GetChildGameObjects(_parentRingObject);
             }
-            else
+            catch (Exception ex)
             {
-                throw new ApplicationException("There is no'_emissionColor 'property in the material.Check the settings for Shader Graph.");
+                throw new ApplicationException("Exception in Initialize: " + ex);
+            }
+        }
+
+        // Helper to retrieve all child objects of the specified parent object as a list
+        private List<GameObject> GetChildGameObjects(GameObject parent)
+        {
+            List<GameObject> children = new(parent.transform.childCount);
+            try
+            {
+                for (int i = 0; i < parent.transform.childCount; i++)
+                {
+                    children.Add(parent.transform.GetChild(i).gameObject);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in GetChildGameObjects: " + ex);
             }
 
-            InitializePillarGroups(_parentPillarObject1);
-            InitializePillarGroups(_parentPillarObject2);
-            InitializeRingGroup(_parentRingObject);
+            return children;
         }
 
         private void OnDestroy()
         {
-            if (_targetMaterial != null && _targetMaterial.HasProperty("_EmissionColor"))
+            try
             {
-                _targetMaterial.SetColor("_EmissionColor", _baseEmissionColor);
-            }
+                RestoreMaterialEmission(_luminousMaterial, _luminousEmission.OriginalColor);
+                RestoreMaterialEmission(_smokeMaterial, _smokeEmission.OriginalColor);
 
-            _isDestroyed = true;
-            _targetMaterial = null;
-            _parentPillarObject1 = null;
-            _parentPillarObject2 = null;
-            _controlledLight = null;
+                _luminousMaterial = null;
+                _smokeMaterial = null;
+                _parentPillarObjectL = null;
+                _parentPillarObjectR = null;
+                _directionalLight = null;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in OnDestroy: " + ex);
+            }
         }
 
-        private void InitializePillarGroups(GameObject parentObject)
+        #region Initialization Helpers
+
+        // Obtains the material's Emission information and stores it in a structure
+        private void InitializeMaterial(Material material, bool isLuminous)
         {
-            if (parentObject != null)
+            if (material == null)
+                return;
+
+            try
             {
-                var parentTransform = parentObject.transform;
-                List<GameObject> cubeGroup = new(parentTransform.childCount);
-
-                for (int i = 0; i < parentTransform.childCount; i++)
+                if (material.HasProperty("_EmissionColor"))
                 {
-                    cubeGroup.Add(parentTransform.GetChild(i).gameObject);
-                }
+                    material.EnableKeyword("_EMISSION");
+                    Color baseColor = material.GetColor("_EmissionColor");
+                    float intensity = baseColor.maxColorComponent;
+                    Color normalized = intensity > 0 ? baseColor / intensity : baseColor;
 
-                _pillarGroups.Add(cubeGroup);
+                    EmissionInfo emissionInfo = new()
+                    {
+                        OriginalColor = baseColor,
+                        Intensity = intensity,
+                        Normalized = normalized
+                    };
+
+                    if (isLuminous)
+                    {
+                        _luminousEmission = emissionInfo;
+                    }
+                    else
+                    {
+                        _smokeEmission = emissionInfo;
+                    }
+                }
+                else if (isLuminous)
+                {
+                    throw new ApplicationException("There is no '_EmissionColor' property in the luminous material. Check the settings for Shader Graph.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in InitializeMaterial: " + ex);
             }
         }
 
-        private void InitializeRingGroup(GameObject parentObject)
+        // Returns the emission color of the material to its initial value.
+        private void RestoreMaterialEmission(Material material, Color baseColor)
         {
-            if (parentObject != null)
+            try
             {
-                var parentTransform = parentObject.transform;
-                _ringGroup = new List<GameObject>(parentTransform.childCount);
-                for (int i = 0; i < parentTransform.childCount; i++)
+                if (material != null && material.HasProperty("_EmissionColor"))
                 {
-                    _ringGroup.Add(parentTransform.GetChild(i).gameObject);
+                    material.SetColor("_EmissionColor", baseColor);
                 }
             }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in RestoreMaterialEmission: " + ex);
+            }
         }
+
+        #endregion
 
         public void UpdateEffect(float average, float[] spectrumData)
         {
-            if (_isDestroyed) return;
-
-            float intensity = Mathf.Clamp01(average * _intensityScale);
-            UpdateLightIntensity(intensity);
-            UpdateFogColor(intensity);
-            UpdateMaterialEmission(intensity);
-            UpdatePillarScales(spectrumData);
-            UpdateRingRotation(intensity);
-        }
-
-        private void UpdateLightIntensity(float intensity)
-        {
-            _controlledLight.intensity = intensity * _maxLightIntensity;
-        }
-
-        private void UpdateFogColor(float intensity)
-        {
-            Color fogColor = Color.Lerp(_baseFogColor, _targetFogColor, intensity);
-            RenderSettings.fogColor = fogColor;
-        }
-
-        private void UpdateMaterialEmission(float intensity)
-        {
-            if (_targetMaterial.HasProperty("_EmissionColor"))
+            try
             {
-                Color newEmissionColor = _baseEmissionColor * intensity;
-                if (_currentEmissionColor != newEmissionColor)
+                float intensity = Mathf.Clamp01(average * _intensityScale);
+
+                // Note: Temporary processing.You should create a score and switch the timing.
+                // Detects and toggles the moment when intensity reaches 1
+                if (Mathf.Approximately(intensity, 1f) && !_previousIntensityWasOne)
                 {
-                    _targetMaterial.SetColor("_EmissionColor", newEmissionColor);
-                    _currentEmissionColor = newEmissionColor;
+                    ToggleColors();
+                    _previousIntensityWasOne = true;
                 }
+                else if (!Mathf.Approximately(intensity, 1f))
+                {
+                    _previousIntensityWasOne = false;
+                }
+
+                UpdatePillarScales(spectrumData);
+                UpdateRingRotation(intensity);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateEffect: " + ex);
             }
         }
 
+        #region Toggle & Emission Helpers
+
+        // Switching between flash and normal states
+        private void ToggleColors()
+        {
+            try
+            {
+                bool newFlashState = !_isFlashActive;
+                SetGlobalColors(newFlashState);
+
+                // Emission updates for each material
+                SetEmissionForMaterial(_luminousMaterial, _luminousEmission.Normalized, _luminousEmission.Intensity, newFlashState);
+                SetEmissionForMaterial(_smokeMaterial, _smokeEmission.Normalized, _smokeEmission.Intensity, newFlashState);
+
+                _isFlashActive = newFlashState;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in ToggleColors: " + ex);
+            }
+        }
+
+        // Updated RenderSettings.fog and DirectionalLight colors
+        private void SetGlobalColors(bool flash)
+        {
+            try
+            {
+                if (flash)
+                {
+                    RenderSettings.fogColor = _flashColor;
+                    if (_directionalLight != null)
+                        _directionalLight.color = _flashColor;
+                }
+                else
+                {
+                    RenderSettings.fogColor = _baseColor;
+                    if (_directionalLight != null)
+                        _directionalLight.color = _baseLightColor;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in SetGlobalColors: " + ex);
+            }
+        }
+
+        // Updated material's Emission color (changed between Flash and normal state)
+        private void SetEmissionForMaterial(Material material, Color baseNormalized, float baseIntensity, bool flash)
+        {
+            try
+            {
+                if (material != null && material.HasProperty("_EmissionColor"))
+                {
+                    Color emission = flash ? NormalizeColor(_flashColor) * baseIntensity : baseNormalized * baseIntensity;
+                    material.SetColor("_EmissionColor", emission);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in SetEmissionForMaterial: " + ex);
+            }
+        }
+
+        // Normalize the specified color (divided by maximum component)
+        private Color NormalizeColor(Color color)
+        {
+            try
+            {
+                float maxComponent = color.maxColorComponent;
+                return maxComponent > 0 ? color / maxComponent : color;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in NormalizeColor: " + ex);
+            }
+        }
+
+        #endregion
+
+        #region Pillar & Ring Update
+
         private void UpdatePillarScales(float[] spectrumData)
         {
-            if (spectrumData == null || spectrumData.Length == 0)
-                return;
-
-            for (int groupIndex = 0; groupIndex < _pillarGroups.Count; groupIndex++)
+            try
             {
-                List<GameObject> cubeGroup = _pillarGroups[groupIndex];
-                UpdateCubeGroupScales(cubeGroup, spectrumData);
+                if (spectrumData == null || spectrumData.Length == 0)
+                    return;
+
+                foreach (List<GameObject> cubeGroup in _pillarGroups)
+                {
+                    UpdateCubeGroupScales(cubeGroup, spectrumData);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdatePillarScales: " + ex);
             }
         }
 
         private void UpdateCubeGroupScales(List<GameObject> cubeGroup, float[] spectrumData)
         {
-            int limit = Mathf.Min(cubeGroup.Count, spectrumData.Length);
-
-            for (int i = 0; i < limit; i++)
+            try
             {
-                UpdatePillarScale(cubeGroup[i], spectrumData[i]);
+                int limit = Mathf.Min(cubeGroup.Count, spectrumData.Length);
+                for (int i = 0; i < limit; i++)
+                {
+                    UpdatePillarScale(cubeGroup[i], spectrumData[i]);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateCubeGroupScales: " + ex);
             }
         }
 
+        // Updated Y scale for each pillar with Lerp
         private void UpdatePillarScale(GameObject cube, float spectrumValue)
         {
-            float intensity = spectrumValue * _scaleMultiplier;
-            float currentScaleY = cube.transform.localScale.y;
-
-            if (Mathf.Abs(currentScaleY - intensity) > 0.01f)
+            try
             {
-                float newScaleY = Mathf.Lerp(currentScaleY, intensity, _lerpSpeed * Time.deltaTime);
-                cube.transform.localScale = new Vector3(
-                    cube.transform.localScale.x,
-                    newScaleY,
-                    cube.transform.localScale.z);
+                float targetScaleY = spectrumValue * _scaleMultiplier;
+                float currentScaleY = cube.transform.localScale.y;
+
+                if (Mathf.Abs(currentScaleY - targetScaleY) > 0.01f)
+                {
+                    float newScaleY = Mathf.Lerp(currentScaleY, targetScaleY, _lerpSpeed * Time.deltaTime);
+                    Vector3 currentScale = cube.transform.localScale;
+                    cube.transform.localScale = new Vector3(currentScale.x, newScaleY, currentScale.z);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdatePillarScale: " + ex);
             }
         }
 
+        // Run a ring rotation animation
         private void UpdateRingRotation(float intensity)
         {
-            // Note: It is a temporary process
-            // It seems that it should be executed at the time of the score, like in Notes.
-            if (intensity >= _rotationThreshold && !_isRotating && _ringGroup.Count > 0)
+            try
             {
+                // Note: It is a temporary process
+                // It seems that it should be executed at the time of the score, like in Notes.
+                if (intensity < _rotationThreshold || _isRotating || _ringGroup.Count == 0)
+                    return;
+
                 _isRotating = true;
 
                 // Create a DOTween Sequence and rotate each child object in the ring group in turn
@@ -223,6 +397,12 @@ namespace BeatSaberClone.Presentation
                 rotationSequence.OnComplete(() => { _isRotating = false; });
                 rotationSequence.Play();
             }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateRingRotation: " + ex);
+            }
         }
+
+        #endregion
     }
 }

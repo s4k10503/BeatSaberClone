@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: AudioVisualEffectParameters
   m_EditorClassIdentifier: 
   IntensityScale: 125
-  BaseFogColor: {r: 0, g: 0, b: 0, a: 1}
-  TargetFogColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
+  BaseColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
+  FlashColor: {r: 0.7490196, g: 0.03529412, b: 0.11764706, a: 1}
   MaxLightIntensity: 10
   ScaleMultiplier: 250
   LerpSpeed: 10
-  RotationAngleMultiplier: 360
+  RotationAngleMultiplier: 180
   RotationThreshold: 1
   DurationPerChild: 0.5
   DelayBetweenChildren: 0.1
