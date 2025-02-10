@@ -3,7 +3,8 @@
 This repository aims to clone BeatSaber in Unity.
 I am trying to reproduce the VR rhythm game part, which is an in game of this work.
 
-![beatsaberclone_v0 9](https://github.com/user-attachments/assets/c74a6176-5843-4690-aff4-8963ba70ae58)
+![beatsaberclone_blue_v0 9](https://github.com/user-attachments/assets/82bd41f3-2b6d-4e3d-99ae-d7d6463a8264)
+![beatsaberclone_red_v0 9](https://github.com/user-attachments/assets/ca2aa33c-b82b-4df5-91d8-0da59527dad1)
 
 ## Requirements
 
