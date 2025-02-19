@@ -2202,6 +2202,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+
     - target: {fileID: 5588208213947342558, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
@@ -2218,6 +2219,7 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
+
     - target: {fileID: 8105178923612639836, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
       propertyPath: audioDataScript
       value: 

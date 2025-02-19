@@ -87,7 +87,6 @@ namespace BeatSaberClone.Presentation
 
                 if (_directionalLight != null)
                     _baseLightColor = _directionalLight.color;
-
                 if (_parentPillarObjectL != null)
                     _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectL));
                 if (_parentPillarObjectR != null)
@@ -125,7 +124,6 @@ namespace BeatSaberClone.Presentation
             try
             {
                 SetGlobalColors(false);
-
                 RestoreMaterialEmission(_luminousMaterial, _luminousEmission.OriginalColor);
                 RestoreMaterialEmission(_smokeMaterial, _smokeEmission.OriginalColor);
 
