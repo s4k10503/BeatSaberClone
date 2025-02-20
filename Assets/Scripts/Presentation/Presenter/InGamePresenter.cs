@@ -139,7 +139,7 @@ namespace BeatSaberClone.Presentation
         public void FixedTick()
         {
             if (_currentState != GameState.Playing) return;
-            _runningTasks.Add(FixedUpdateGameAsync());
+            _audioDataProcessingUseCase.UpdateSpectrumData();
             CleanCompletedTasks();
         }
 
@@ -190,16 +190,6 @@ namespace BeatSaberClone.Presentation
             await UniTask.WhenAll(
                 _objectSlicerR.UpdateTrailAsync(_cts.Token),
                 _objectSlicerL.UpdateTrailAsync(_cts.Token));
-        }
-
-        private async UniTask FixedUpdateGameAsync()
-        {
-            if (!_soundUseCase.GetTrackIsPlaying()) return;
-
-            _audioDataProcessingUseCase.UpdateSpectrumData();
-            await UniTask.WhenAll(
-                _objectSlicerR.SliceDetectionAsync(_cts.Token),
-                _objectSlicerL.SliceDetectionAsync(_cts.Token));
         }
 
         private bool IsGameOver()
