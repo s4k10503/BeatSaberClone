@@ -6,7 +6,7 @@ namespace BeatSaberClone.Presentation
     {
         void SetParameters(float moveSpeed, float originalY, float lerpSpeed);
         void InitializeRotation(Transform transform, Quaternion targetRotation, float duration);
-        void ApplyMovementAndRotation(Transform transform, float moveSpeed);
+        void ApplyMovementAndRotation(Transform transform, float moveSpeed, bool hasSlowedDown);
         void StopRotation();
     }
 }

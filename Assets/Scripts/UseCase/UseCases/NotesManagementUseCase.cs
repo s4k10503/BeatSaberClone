@@ -29,15 +29,19 @@ namespace BeatSaberClone.UseCase
             INotesRepository notesRepository,
             IDistanceCalculator distanceCalculator,
             INoteScheduler noteScheduler,
-            INoteSpawnService noteSpawnService,
-            [Inject(Id = "BoxInitialMoveSpeed")] float initialMoveSpeed,
-            [Inject(Id = "BoxFinalMoveSpeed")] float finalMoveSpeed,
-            [Inject(Id = "BoxSlowDownDistance")] float slowDownDistance)
+            INoteSpawnService noteSpawnService)
         {
             _notesRepository = notesRepository;
             _distanceCalculator = distanceCalculator;
             _noteScheduler = noteScheduler;
             _noteSpawnService = noteSpawnService;
+        }
+
+        public void Initialize(
+            float initialMoveSpeed,
+            float finalMoveSpeed,
+            float slowDownDistance)
+        {
             _initialMoveSpeed = initialMoveSpeed;
             _finalMoveSpeed = finalMoveSpeed;
             _slowDownDistance = slowDownDistance;

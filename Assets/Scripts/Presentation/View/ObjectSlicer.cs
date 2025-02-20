@@ -1,7 +1,6 @@
 using UnityEngine;
 using UniRx;
 using BeatSaberClone.Domain;
-using BeatSaberClone.UseCase;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
@@ -27,12 +26,13 @@ namespace BeatSaberClone.Presentation
         public Transform TipTransform { get; private set; }
         public Vector3 SliceDirection { get; private set; }
         public Vector3 Velocity { get; private set; }
+        public float CutForce { get; private set; }
 
         [Header("Trail Settings")]
         [SerializeField] private GameObject _tip;
         [SerializeField] private GameObject _base;
         [SerializeField] private GameObject _meshParent;
-        [SerializeField] private TrailSettings _trailSettings;
+
         private int _numVerticesPerFrame;
         private int _trailFrameLength;
 
@@ -50,14 +50,23 @@ namespace BeatSaberClone.Presentation
         [Inject]
         public void Construct(
             IParticleEffectHandler particleEffectHandler,
-            ITrailGenerator trailGenerator)
+            ITrailGenerator trailGenerator,
+            SlicerSettings slicerSettings)
         {
             TipTransform = _tip.transform;
-            _sliceDetector = new LinecastSliceDetector(_base.transform, _tip.transform, _slicableLayer);
+
+            _sliceDetector = new SphereCastSliceDetector(
+                _base.transform,
+                _tip.transform,
+                _slicableLayer,
+                slicerSettings.DetectionRadius,
+                slicerSettings.InterpolationSteps);
+
+            CutForce = slicerSettings.CutForce;
 
             _trailGenerator = trailGenerator;
-            _numVerticesPerFrame = _trailSettings.NumVerticesPerFrame;
-            _trailFrameLength = _trailSettings.TrailFrameLength;
+            _numVerticesPerFrame = slicerSettings.NumVerticesPerFrame;
+            _trailFrameLength = slicerSettings.TrailFrameLength;
 
             _particleEffectHandler = particleEffectHandler;
             _particleDelaytime = _particleEffectSettings.ParticleDelayTime;
@@ -65,7 +74,7 @@ namespace BeatSaberClone.Presentation
             _maxPoolSize = _particleEffectSettings.MaxPoolSize;
         }
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             // Fix: Comment out because the drawing position of the trail is strange
             // await _trailGenerator.Initialize(_tip.transform, _base.transform, _meshParent, _numVerticesPerFrame, _trailFrameLength, ct);
@@ -74,9 +83,9 @@ namespace BeatSaberClone.Presentation
             gameObject.SetActive(true);
         }
 
-        public void UpdateTrail()
+        public async UniTask UpdateTrailAsync(CancellationToken ct)
         {
-            // _trailGenerator.UpdateTrail();
+            await _trailGenerator.UpdateTrailAsync(ct);
         }
 
         private void OnDestroy()
@@ -91,19 +100,20 @@ namespace BeatSaberClone.Presentation
             _particleEffect = null;
         }
 
-        public void SliceDetection(CancellationToken ct)
+        public async UniTask SliceDetectionAsync(CancellationToken ct)
         {
             if (_sliceDetector?.CheckForSlice(out GameObject slicedObject) == true)
             {
-                ProcessSlice(slicedObject, ct);
+                await ProcessSliceAsync(slicedObject, ct);
             }
         }
 
-        private void ProcessSlice(GameObject slicedObject, CancellationToken ct)
+        private async UniTask ProcessSliceAsync(GameObject slicedObject, CancellationToken ct)
         {
-            CalculateSliceData();
             _hitObject.Value = slicedObject;
-            _particleEffectHandler?.TriggerParticleEffect(
+            CalculateSliceData();
+
+            await _particleEffectHandler.TriggerParticleEffectAsync(
                 _particleEffect,
                 transform.position,
                 Quaternion.identity,

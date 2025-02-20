@@ -1,4 +1,5 @@
 using Zenject;
+using BeatSaberClone.Domain;
 using BeatSaberClone.Presentation;
 using UnityEngine;
 
@@ -8,11 +9,10 @@ namespace BeatSaberClone.Installer
     {
         [Header("ScriptableObject")]
         [SerializeField] private AudioVisualEffectParameters _audioVisualEffectParameters;
-        [SerializeField] private BoxSettings _boxSettings;
 
         [Header("Prefabs")]
-        [SerializeField] private GameObject _redBoxPrefab;
-        [SerializeField] private GameObject _blueBoxPrefab;
+        [SerializeField] private GameObject _leftBoxPrefab;
+        [SerializeField] private GameObject _rightBoxPrefab;
 
         public override void InstallBindings()
         {
@@ -30,57 +30,19 @@ namespace BeatSaberClone.Installer
                 .AsSingle();
 
             Container
-                .BindFactory<BoxView, BoxView.Factory>()
-                .WithId("RedBox")
-                .FromComponentInNewPrefab(_redBoxPrefab)
-                .AsTransient();
-
-            Container
-                .BindFactory<BoxView, BoxView.Factory>()
-                .WithId("BlueBox")
-                .FromComponentInNewPrefab(_blueBoxPrefab)
-                .AsTransient();
-
-            Container
-                .Bind<CustomBoxViewFactory>()
+                .Bind<CustomBoxViewPool>()
                 .AsSingle();
 
-            Container
-                .Bind<float>()
-                .WithId("BoxInitialMoveSpeed")
-                .FromInstance(_boxSettings.InitialMoveSpeed);
-
-            Container
-                .Bind<float>()
-                .WithId("BoxFinalMoveSpeed")
-                .FromInstance(_boxSettings.FinalMoveSpeed);
-
-            Container
-                .Bind<float>()
-                .WithId("BoxSlowDownDistance")
-                .FromInstance(_boxSettings.SlowDownDistance);
-
-            Container
-                .Bind<float>()
-                .WithId("BoxLerpSpeed")
-                .FromInstance(_boxSettings.LerpSpeed);
-
-            Container
-                .Bind<float>()
-                .WithId("BoxDestroyZCoordinates")
-                .FromInstance(_boxSettings.DestroyZCoordinates);
-
-            Container
-                .Bind<float>()
-                .WithId("BoxRotationDuration")
-                .FromInstance(_boxSettings.RotationDuration);
+            Container.BindMemoryPool<BoxView, BoxView.BoxPool>()
+                .WithId("LeftBox")
+                .WithInitialSize(10)
+                .FromComponentInNewPrefab(_leftBoxPrefab);
 
 
-
-            Container
-                .Bind<float>()
-                .WithId("BoxRotationDelay")
-                .FromInstance(_boxSettings.RotationDelay);
+            Container.BindMemoryPool<BoxView, BoxView.BoxPool>()
+                .WithId("RightBox")
+                .WithInitialSize(10)
+                .FromComponentInNewPrefab(_rightBoxPrefab);
 
             Container
                 .Bind<IAudioVisualEffecter>()
@@ -98,12 +60,6 @@ namespace BeatSaberClone.Installer
                 .Bind<IParticleEffectHandler>()
                 .To<ParticleEffectHandler>()
                 .FromComponentInHierarchy()
-                .AsSingle();
-
-            Container
-                .Bind<ISlicedObject>()
-                .To<SlicedObject>()
-                .FromNew()
                 .AsSingle();
 
             Container

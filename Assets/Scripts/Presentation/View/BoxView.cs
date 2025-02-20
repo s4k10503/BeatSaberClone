@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using EzySlice;
 using UniRx;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -7,114 +8,135 @@ using Zenject;
 
 namespace BeatSaberClone.Presentation
 {
-    public sealed class BoxView : MonoBehaviour
+    // Implement iPoolable and receive parameters at Spawn
+    public sealed class BoxView : MonoBehaviour, ISlicedObject
     {
-        private GameObject _cachedGameObject;
-
         public bool IsSliced { get; private set; }
-
+        private GameObject _cachedGameObject;
+        private IMemoryPool _pool;
         private IMovementAnimationController _movementAnimationController;
-        private ISlicedObject _slicedObject;
 
-        private float _lerpSpeed;
-        private float _destroyZCoordinates;
+        private float _currentMoveSpeed;
         private bool _isMoving;
-        private int _type;
-        private float _moveSpeed; // Current movement speed (starting at the initial speed)
-        private float _originalY;
-        private float _finalMoveSpeed;    // Moving speed after throwing down
-        private float _slowDownDistance; // Slow -down timing, the threshold of Z coordinates, etc.
-        private bool _hasSlowedDown;      // Is it already slow down?
-        private float _rotationDuration;
-        private float _rotationDelay;
+        private bool _hasSlowedDown;
         private Quaternion _targetRotation;
 
+        private SpawnSettings _spawnSettings;
+        private MovementSettings _movementSettings;
+        private RotationSettings _rotationSettings;
+        private DestroySettings _destroySettings;
+        private SlicedSettings _slicedSettings;
+
         private readonly Subject<Unit> _onComboReset = new();
-        public IObservable<Unit> OnComboReset => _onComboReset;
-
-        private CancellationToken _ct;
-
-        private enum CutDirection
-        {
-            Down = 0,
-            Up = 1,
-            Right = 2,
-            Left = 3
-        }
+        public IObservable<Unit> OnComboReset => _onComboReset.AsObservable();
 
         [Inject]
-        public void Construct(
-            IMovementAnimationController movementAnimationController,
-            ISlicedObject slicedObject,
-            [Inject(Id = "BoxLerpSpeed")] float lerpSpeed,
-            [Inject(Id = "BoxDestroyZCoordinates")] float destroyZCoordinates,
-            [Inject(Id = "BoxFinalMoveSpeed")] float finalMoveSpeed,
-            [Inject(Id = "BoxSlowDownDistance")] float slowDownDistance,
-            [Inject(Id = "BoxRotationDuration")] float rotationDuration,
-            [Inject(Id = "BoxRotationDelay")] float rotationDelay)
+        public void Construct(IMovementAnimationController movementAnimationController)
         {
-            _movementAnimationController = movementAnimationController;
-            _slicedObject = slicedObject;
-            _lerpSpeed = lerpSpeed;
-            _destroyZCoordinates = destroyZCoordinates;
-            _finalMoveSpeed = finalMoveSpeed;
-            _slowDownDistance = slowDownDistance;
             _hasSlowedDown = false;
-            _rotationDuration = rotationDuration;
-            _rotationDelay = rotationDelay;
-
+            _movementAnimationController = movementAnimationController;
             _cachedGameObject = gameObject;
-        }
-
-        public sealed class Factory : PlaceholderFactory<BoxView> { }
-
-        private void FixedUpdate()
-        {
-            if (!_isMoving || _cachedGameObject == null) return;
-
-            // If the specified threshold is not yet slowed down, change the movement speed
-            if (!_hasSlowedDown && transform.position.z <= _slowDownDistance)
-            {
-                _moveSpeed = _finalMoveSpeed;
-                _hasSlowedDown = true;
-
-                if (transform.position.z > _destroyZCoordinates)
-                {
-                    TriggerAnimationAsync(_ct).Forget();
-                }
-            }
-
-            if (transform.position.z > _destroyZCoordinates)
-            {
-                _movementAnimationController.ApplyMovementAndRotation(transform, _moveSpeed);
-            }
-            else
-            {
-                _movementAnimationController.StopRotation();
-                _onComboReset.OnNext(Unit.Default);
-
-                Destroy(_cachedGameObject);
-                _cachedGameObject = null;
-            }
         }
 
         private void OnDestroy()
         {
             _onComboReset.Dispose();
             _movementAnimationController = null;
-            _slicedObject = null;
         }
 
-        private async UniTask TriggerAnimationAsync(CancellationToken ct)
+        public sealed class BoxPool : MonoMemoryPool<SpawnSettings, BoxView>
+        {
+            protected override void Reinitialize(SpawnSettings spawnSettings, BoxView item)
+            {
+                item.OnSpawned(this, spawnSettings);
+            }
+
+            protected override void OnDespawned(BoxView item)
+            {
+                item.OnDespawned();
+            }
+        }
+
+        private void OnSpawned(IMemoryPool pool, SpawnSettings spawnSettings)
+        {
+            _pool = pool;
+
+            _spawnSettings = spawnSettings;
+            _movementSettings = _spawnSettings.MovementSettings;
+            _rotationSettings = _spawnSettings.RotationSettings;
+            _destroySettings = _spawnSettings.DestroySettings;
+            _slicedSettings = _spawnSettings.SlicedSettings;
+
+            _currentMoveSpeed = _movementSettings.InitialMoveSpeed;
+            _isMoving = true;
+            IsSliced = false;
+            _hasSlowedDown = false;
+
+            float _targetRotationZ = GetTargetRotationZ(_spawnSettings.CutDirection);
+            _targetRotation = Quaternion.Euler(0, 0, _targetRotationZ);
+
+            gameObject.SetActive(true);
+        }
+
+        private void OnDespawned()
+        {
+            _isMoving = false;
+            _hasSlowedDown = false;
+            gameObject.SetActive(false);
+        }
+
+        public void ReturnToPool()
+        {
+            _pool?.Despawn(this);
+        }
+
+        private void FixedUpdate()
+        {
+            if (!_isMoving || _cachedGameObject == null) return;
+
+            TrySlowDown();
+            ProcessMovement();
+        }
+
+        private void TrySlowDown()
+        {
+            if (!_hasSlowedDown && transform.position.z <= _movementSettings.SlowDownDistance)
+            {
+                _currentMoveSpeed = _movementSettings.FinalMoveSpeed;
+                _hasSlowedDown = true;
+
+                // If you haven't reached the discarded position yet, start rotating animation.
+                if (transform.position.z > _destroySettings.DestroyZCoordinates)
+                {
+                    TriggerAnimationAsync().Forget();
+                }
+            }
+        }
+
+        private void ProcessMovement()
+        {
+            if (transform.position.z > _destroySettings.DestroyZCoordinates)
+            {
+                _movementAnimationController.ApplyMovementAndRotation(transform, _currentMoveSpeed, _hasSlowedDown);
+            }
+            else
+            {
+                _movementAnimationController.StopRotation();
+                _onComboReset.OnNext(Unit.Default);
+                ReturnToPool();
+            }
+        }
+
+        private async UniTask TriggerAnimationAsync()
         {
             if (_cachedGameObject == null || transform == null) return;
 
             // Supplies from current rotation to target rotation
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(_rotationDelay), cancellationToken: ct);
-                _movementAnimationController.SetParameters(_moveSpeed, _originalY, _lerpSpeed);
-                _movementAnimationController.InitializeRotation(transform, _targetRotation, _rotationDuration);
+                await UniTask.Delay(TimeSpan.FromSeconds(_rotationSettings.RotationDelayTime), cancellationToken: _spawnSettings.Ct);
+                _movementAnimationController.SetParameters(_currentMoveSpeed, _spawnSettings.OriginalY, _movementSettings.LerpSpeed);
+                _movementAnimationController.InitializeRotation(transform, _targetRotation, _rotationSettings.RotationDuration);
             }
             catch (OperationCanceledException)
             {
@@ -130,29 +152,58 @@ namespace BeatSaberClone.Presentation
             Vector3 slicePosition,
             Vector3 planeNormal,
             Material crossSectionMaterial,
+            float cutForce,
             CancellationToken ct)
         {
             if (IsSliced) return;
 
             IsSliced = true;
 
-            await _slicedObject.Sliced(_cachedGameObject, slicePosition, planeNormal, crossSectionMaterial, ct);
+            var hull = _cachedGameObject.Slice(slicePosition, planeNormal);
+            if (hull != null)
+            {
+                // I want to pool the object.
+                // But I've discarded it because there are too many variations in the cut surface.
+                var upperHull = hull.CreateUpperHull(_cachedGameObject, crossSectionMaterial);
+                var lowerHull = hull.CreateLowerHull(_cachedGameObject, crossSectionMaterial);
+
+                ReturnToPool();
+
+                await UniTask.WhenAll(
+                    AddForceToSlicedObjectAsync(upperHull, cutForce, ct),
+                    AddForceToSlicedObjectAsync(lowerHull, cutForce, ct)
+                );
+            }
+        }
+
+        private async UniTask AddForceToSlicedObjectAsync(
+            GameObject obj,
+            float cutForce,
+            CancellationToken ct)
+        {
+            var rb = obj.AddComponent<Rigidbody>();
+            var collider = obj.AddComponent<MeshCollider>();
+            collider.convex = true;
+            rb.AddExplosionForce(cutForce, obj.transform.position, 1);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(_destroySettings.DestroyDelayTime), cancellationToken: ct);
+
+            // The same reason as the note that the method was called
+            Destroy(obj);
+            obj = null;
         }
 
         public float CheckSliceDirection(Vector3 velocity, int cutDirection)
         {
             // Get the expected cut direction
-            Vector3 expectedDirection = GetExpectedCutDirection((CutDirection)cutDirection);
+            Vector3 expectedDirection = GetExpectedCutDirection(cutDirection);
 
             // Calculate the actual cutting direction and the expected direction
             float angle = Vector3.Angle(velocity.normalized, expectedDirection);
 
-            // Angle allowable range (eg ± 15 degrees)
-            var allowedAngle = 15f;
-
             // Correction recommendation: Logic about score magnification is not a View responsibility
             // It is conceivable to return a difference from the target angle
-            if (angle <= allowedAngle)
+            if (angle <= _slicedSettings.AllowedAngle)
             {
                 return 1f;
             }
@@ -163,43 +214,29 @@ namespace BeatSaberClone.Presentation
             }
         }
 
-        // Set the box type, initial speed, and early Y coordinates
-        public void SetParameters(int type, float moveSpeed, float originalY, int cutDirection, CancellationToken ct)
-        {
-            _type = type;
-            _moveSpeed = moveSpeed;
-            _originalY = originalY;
-            _isMoving = true;
-            IsSliced = false;
-            _hasSlowedDown = false;
-            _ct = ct;
-
-            float _targetRotationZ = GetTargetRotationZ((CutDirection)cutDirection);
-            _targetRotation = Quaternion.Euler(0, 0, _targetRotationZ);
-        }
-
-
-        private float GetTargetRotationZ(CutDirection cutDirection)
+        // cutDirection: 0 = Down, 1 = Up, 2 = Right, 3 = Left
+        private float GetTargetRotationZ(int cutDirection)
         {
             return cutDirection switch
             {
-                CutDirection.Down => 180f,
-                CutDirection.Up => 0f,
-                CutDirection.Right => 90f,
-                CutDirection.Left => 270f,
-                _ => 0f
+                0 => _slicedSettings.DownRotationZ,
+                1 => _slicedSettings.UpRotationZ,
+                2 => _slicedSettings.RightRotationZ,
+                3 => _slicedSettings.LeftRotationZ,
+                _ => 0f,
             };
         }
 
-        private Vector3 GetExpectedCutDirection(CutDirection cutDirection)
+        // cutDirection: 0 = Down, 1 = Up, 2 = Right, 3 = Left
+        private Vector3 GetExpectedCutDirection(int cutDirection)
         {
             return cutDirection switch
             {
-                CutDirection.Down => Vector3.down,
-                CutDirection.Up => Vector3.up,
-                CutDirection.Right => Vector3.right,
-                CutDirection.Left => Vector3.left,
-                _ => Vector3.zero
+                0 => _slicedSettings.DownDirection,
+                1 => _slicedSettings.UpDirection,
+                2 => _slicedSettings.RightDirection,
+                3 => _slicedSettings.LeftDirection,
+                _ => Vector3.zero,
             };
         }
     }

@@ -7,10 +7,10 @@ namespace BeatSaberClone.Presentation
     public interface ISlicedObject
     {
         UniTask Sliced(
-            GameObject targetObject,
             Vector3 slicePosition,
             Vector3 planeNormal,
             Material crossSectionMaterial,
+            float cutForce,
             CancellationToken ct);
     }
 }

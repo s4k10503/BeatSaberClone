@@ -45,7 +45,7 @@ namespace BeatSaberClone.Presentation
         private readonly CancellationTokenSource _cts;
 
         // Management list of issued tasks
-        private readonly List<UniTask> _runningTasks = new List<UniTask>();
+        private readonly List<UniTask> _runningTasks = new();
 
         #endregion
 
@@ -139,13 +139,15 @@ namespace BeatSaberClone.Presentation
         public void FixedTick()
         {
             if (_currentState != GameState.Playing) return;
-            FixedUpdateGame();
+            _runningTasks.Add(FixedUpdateGameAsync());
+            CleanCompletedTasks();
         }
 
         public void LateTick()
         {
-            _objectSlicerR.UpdateTrail();
-            _objectSlicerL.UpdateTrail();
+            // Notice:Comment out because there is a trail drawing bug
+            //_runningTasks.Add(LateUpdateGameAsync());
+            //CleanCompletedTasks();
         }
 
         private async UniTask UpdateGameAsync()
@@ -174,7 +176,6 @@ namespace BeatSaberClone.Presentation
                     }
                     await UniTask.WhenAll(spawnTasks);
 
-
                     _audioVisualEffecter.UpdateEffect(averageSpectrum, spectrumData);
                 }
                 else if (_trackStartTime > 0)
@@ -184,13 +185,21 @@ namespace BeatSaberClone.Presentation
             }, _cts.Token);
         }
 
-        private void FixedUpdateGame()
+        private async UniTask LateUpdateGameAsync()
+        {
+            await UniTask.WhenAll(
+                _objectSlicerR.UpdateTrailAsync(_cts.Token),
+                _objectSlicerL.UpdateTrailAsync(_cts.Token));
+        }
+
+        private async UniTask FixedUpdateGameAsync()
         {
             if (!_soundUseCase.GetTrackIsPlaying()) return;
 
             _audioDataProcessingUseCase.UpdateSpectrumData();
-            _objectSlicerR.SliceDetection(_cts.Token);
-            _objectSlicerL.SliceDetection(_cts.Token);
+            await UniTask.WhenAll(
+                _objectSlicerR.SliceDetectionAsync(_cts.Token),
+                _objectSlicerL.SliceDetectionAsync(_cts.Token));
         }
 
         private bool IsGameOver()
@@ -217,6 +226,12 @@ namespace BeatSaberClone.Presentation
         {
             await _exceptionHandlingUseCase.SafeExecuteAsync(async () =>
             {
+                // Defining ScriptableObjects in DDD is difficult
+                // For convenience, the values ​​installed from ScriptableObject have been published from View.
+                var initialMoveSpeed = _boxSpawner.MovementSettings.InitialMoveSpeed;
+                var finalMoveSpeed = _boxSpawner.MovementSettings.FinalMoveSpeed;
+                var slowDownDistance = _boxSpawner.MovementSettings.SlowDownDistance;
+                _notesManagementUseCase.Initialize(initialMoveSpeed, finalMoveSpeed, slowDownDistance);
                 _notesManagementUseCase.SetDistance(_boxSpawner.SpawnPoints[0], _boxSpawner.PlayerPoint);
                 _notesManagementUseCase.PrepareNotes();
 
@@ -233,8 +248,8 @@ namespace BeatSaberClone.Presentation
             {
                 _audioVisualEffecter.Initialize();
                 await UniTask.WhenAll(
-                    _objectSlicerR.Initialize(_cts.Token),
-                    _objectSlicerL.Initialize(_cts.Token)
+                    _objectSlicerR.InitializeAsync(_cts.Token),
+                    _objectSlicerL.InitializeAsync(_cts.Token)
                 );
                 _inGameUiView.SetTotalDuration(_soundUseCase.GetTotalDuration());
             }, _cts.Token);
@@ -309,19 +324,20 @@ namespace BeatSaberClone.Presentation
             if (boxView == null || boxView.IsSliced)
                 return;
 
-            // At the same time, execute sound playback and haptic feedback
+            // At the same time, execute sound playback, processing of target objects and haptic feedback
             var playSoundTask = _soundUseCase.PlaySoundEffect(SoundEffect.Slice, _cts.Token);
             var feedbackTask = _hapticFeedback.TriggerFeedback(
                 slicer.Side == SlicerSide.Left ? XRNode.LeftHand : XRNode.RightHand,
                 _cts.Token);
-            UniTask.WhenAll(playSoundTask, feedbackTask).Forget();
 
-            // Slice processing of target objects
-            boxView.Sliced(
+            var sliceTask = boxView.Sliced(
                 slicer.TipTransform.position,
                 slicer.PlaneNormal,
                 slicer.CrossSectionMaterial,
-                _cts.Token).Forget();
+                slicer.CutForce,
+                _cts.Token);
+
+            UniTask.WhenAll(playSoundTask, feedbackTask, sliceTask).Forget();
 
             int slicerId = (slicer.Side == SlicerSide.Left) ? 0 : 1;
             float scoreMultiplier = boxView.CheckSliceDirection(slicer.Velocity, slicerId);

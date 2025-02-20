@@ -1,6 +1,4 @@
 using UnityEngine;
-using Cysharp.Threading.Tasks;
-using System.Threading;
 using System;
 
 namespace BeatSaberClone.Presentation
@@ -45,11 +43,11 @@ namespace BeatSaberClone.Presentation
             }
         }
 
-        public void ApplyMovementAndRotation(Transform transform, float moveSpeed)
+        public void ApplyMovementAndRotation(Transform transform, float moveSpeed, bool hasSlowedDown)
         {
             _moveSpeed = moveSpeed;
 
-            MoveForward(transform);
+            MoveForward(transform, hasSlowedDown);
 
             if (_isRotating)
             {
@@ -62,7 +60,7 @@ namespace BeatSaberClone.Presentation
             _isRotating = false;
         }
 
-        private void MoveForward(Transform transform)
+        private void MoveForward(Transform transform, bool hasSlowedDown)
         {
             if (transform == null || transform.gameObject == null) return;
 
@@ -74,7 +72,7 @@ namespace BeatSaberClone.Presentation
             position -= _moveSpeed * deltaTime * Vector3.forward;
 
             // Supreme y coordinates and return to their original position
-            if (!Mathf.Approximately(position.y, _originalY))
+            if (hasSlowedDown && !Mathf.Approximately(position.y, _originalY))
             {
                 position.y = Mathf.Lerp(position.y, _originalY, deltaTime * _lerpSpeed);
             }

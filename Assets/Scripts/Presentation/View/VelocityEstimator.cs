@@ -19,8 +19,6 @@ namespace BeatSaberClone.Presentation
         private int _velocityAverageFrames;
         private int _angularVelocityAverageFrames;
 
-        public bool estimateOnAwake = false;
-
         private int sampleCount;
         private Vector3[] velocitySamples;
         private Vector3[] angularVelocitySamples;
@@ -121,14 +119,11 @@ namespace BeatSaberClone.Presentation
 
         private async UniTaskVoid EstimateVelocityAsync(CancellationToken token)
         {
-            Vector3 previousPosition = transform.position;
-            Quaternion previousRotation = transform.rotation;
-
+            transform.GetPositionAndRotation(out Vector3 previousPosition, out Quaternion previousRotation);
             while (!token.IsCancellationRequested)
             {
                 // Wait for end of frame
                 await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, token);
-
 
                 sampleCount++;
                 int velocityIndex = (sampleCount - 1) % velocitySamples.Length;
@@ -137,8 +132,7 @@ namespace BeatSaberClone.Presentation
                 velocitySamples[velocityIndex] = (transform.position - previousPosition) / Time.deltaTime;
                 angularVelocitySamples[angularVelocityIndex] = ComputeAngularVelocity(previousRotation, transform.rotation);
 
-                previousPosition = transform.position;
-                previousRotation = transform.rotation;
+                transform.GetPositionAndRotation(out previousPosition, out previousRotation);
             }
         }
 

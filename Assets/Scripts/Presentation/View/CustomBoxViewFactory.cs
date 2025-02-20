@@ -1,27 +1,26 @@
-using System.Threading;
 using Zenject;
 
 namespace BeatSaberClone.Presentation
 {
-    public sealed class CustomBoxViewFactory : IFactory<int, BoxView>
+    public sealed class CustomBoxViewPool : IFactory<SpawnSettings, BoxView>
     {
-        private readonly BoxView.Factory _redBoxFactory;
-        private readonly BoxView.Factory _blueBoxFactory;
+        private readonly BoxView.BoxPool _leftBoxPool;
+        private readonly BoxView.BoxPool _rightBoxPool;
 
-        public CustomBoxViewFactory(
-            [Inject(Id = "RedBox")] BoxView.Factory redBoxFactory,
-            [Inject(Id = "BlueBox")] BoxView.Factory blueBoxFactory)
+        [Inject]
+        public CustomBoxViewPool(
+            [Inject(Id = "LeftBox")] BoxView.BoxPool leftBoxPool,
+            [Inject(Id = "RightBox")] BoxView.BoxPool rightBoxPool)
         {
-            _redBoxFactory = redBoxFactory;
-            _blueBoxFactory = blueBoxFactory;
+            _leftBoxPool = leftBoxPool;
+            _rightBoxPool = rightBoxPool;
         }
 
-        public BoxView Create(int type)
+        public BoxView Create(SpawnSettings spawnSettings)
         {
-            var boxView = type == 0
-                ? _redBoxFactory.Create()
-                : _blueBoxFactory.Create();
-
+            var boxView = spawnSettings.Type == 0
+                ? _leftBoxPool.Spawn(spawnSettings)
+                : _rightBoxPool.Spawn(spawnSettings);
             return boxView;
         }
     }

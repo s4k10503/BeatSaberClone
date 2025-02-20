@@ -7,7 +7,7 @@ namespace BeatSaberClone.Presentation
 {
     public interface ITrailGenerator : IDisposable
     {
-        UniTask Initialize(
+        UniTask InitializeAsync(
             Transform tipTransform,
             Transform baseTransform,
             GameObject meshParent,
@@ -15,6 +15,6 @@ namespace BeatSaberClone.Presentation
             int trailFrameLength,
             CancellationToken ct);
 
-        void UpdateTrail();
+        UniTask UpdateTrailAsync(CancellationToken ct);
     }
 }
