@@ -36,7 +36,6 @@ namespace BeatSaberClone.Presentation
         private int _numVerticesPerFrame;
         private int _trailFrameLength;
 
-        private ISliceDetector _sliceDetector;
         private IParticleEffectHandler _particleEffectHandler;
         private ITrailGenerator _trailGenerator;
 
@@ -54,13 +53,6 @@ namespace BeatSaberClone.Presentation
             SlicerSettings slicerSettings)
         {
             TipTransform = _tip.transform;
-
-            _sliceDetector = new SphereCastSliceDetector(
-                _base.transform,
-                _tip.transform,
-                _slicableLayer,
-                slicerSettings.DetectionRadius,
-                slicerSettings.InterpolationSteps);
 
             CutForce = slicerSettings.CutForce;
 
@@ -94,17 +86,16 @@ namespace BeatSaberClone.Presentation
             _trailGenerator.Dispose();
             _particleEffectHandler = null;
             _trailGenerator = null;
-            _sliceDetector = null;
             _velocityEstimator = null;
             _crossSectionMaterial = null;
             _particleEffect = null;
         }
 
-        public async UniTask SliceDetectionAsync(CancellationToken ct)
+        private void OnTriggerEnter(Collider other)
         {
-            if (_sliceDetector?.CheckForSlice(out GameObject slicedObject) == true)
+            if (((1 << other.gameObject.layer) & _slicableLayer.value) != 0)
             {
-                await ProcessSliceAsync(slicedObject, ct);
+                ProcessSliceAsync(other.gameObject, CancellationToken.None).Forget();
             }
         }
 

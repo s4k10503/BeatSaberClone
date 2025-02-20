@@ -1,14 +1,12 @@
-using UnityEngine;
 using UniRx;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Zenject;
-using BeatSaberClone.Domain;
 using BeatSaberClone.UseCase;
 
 namespace BeatSaberClone.Presentation
 {
-    public sealed class SaberTestPresenter : IInitializable, ITickable, IFixedTickable, ILateTickable
+    public sealed class SaberTestPresenter : IInitializable, ITickable, ILateTickable
     {
         // UseCases
         private readonly IViewLogUseCase _viewLogUseCase;
@@ -40,11 +38,6 @@ namespace BeatSaberClone.Presentation
 
         void ITickable.Tick()
         {
-        }
-
-        void IFixedTickable.FixedTick()
-        {
-            _objectSlicerR.SliceDetectionAsync(_cts.Token);
         }
 
         void ILateTickable.LateTick()
