@@ -80,19 +80,22 @@ namespace BeatSaberClone.Presentation
         {
             try
             {
+                if (_directionalLight != null)
+                    _baseLightColor = _directionalLight.color;
+
+                if (_parentPillarObjectL != null)
+                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectL));
+
+                if (_parentPillarObjectR != null)
+                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectR));
+
+                if (_parentRingObject != null)
+                    _ringGroup = GetChildGameObjects(_parentRingObject);
+
                 RenderSettings.fog = true;
                 SetGlobalColors(false);
                 InitializeMaterial(_luminousMaterial, isLuminous: true);
                 InitializeMaterial(_smokeMaterial, isLuminous: false);
-
-                if (_directionalLight != null)
-                    _baseLightColor = _directionalLight.color;
-                if (_parentPillarObjectL != null)
-                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectL));
-                if (_parentPillarObjectR != null)
-                    _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectR));
-                if (_parentRingObject != null)
-                    _ringGroup = GetChildGameObjects(_parentRingObject);
             }
             catch (Exception ex)
             {

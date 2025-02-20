@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1f1c091fd3219a4da926e14bbb97f0e, type: 3}
   m_Name: SlicerSettings
   m_EditorClassIdentifier: 
-  DetectionRadius: 0.1
+  DetectionRadius: 0.01
   InterpolationSteps: 20
   NumVerticesPerFrame: 12
   TrailFrameLength: 3
+  CutForce: 2000
