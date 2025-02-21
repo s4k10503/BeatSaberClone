@@ -193,10 +193,16 @@ namespace BeatSaberClone.Presentation
             obj = null;
         }
 
-        public float CheckSliceDirection(Vector3 velocity, int cutDirection)
+        public float CheckSliceDirection(Vector3 velocity, int slicerId)
         {
+            if (_spawnSettings.Type != slicerId)
+            {
+                _onComboReset.OnNext(Unit.Default);
+                return 0f;
+            }
+
             // Get the expected cut direction
-            Vector3 expectedDirection = GetExpectedCutDirection(cutDirection);
+            Vector3 expectedDirection = GetExpectedCutDirection(_spawnSettings.CutDirection);
 
             // Calculate the actual cutting direction and the expected direction
             float angle = Vector3.Angle(velocity.normalized, expectedDirection);
