@@ -18,7 +18,6 @@ namespace BeatSaberClone.Presentation
         float CutForce { get; }
 
         UniTask InitializeAsync(CancellationToken ct);
-        UniTask SliceDetectionAsync(CancellationToken ct);
         UniTask UpdateTrailAsync(CancellationToken ct);
     }
 }
