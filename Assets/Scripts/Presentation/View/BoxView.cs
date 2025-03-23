@@ -204,8 +204,11 @@ namespace BeatSaberClone.Presentation
             // Get the expected cut direction
             Vector3 expectedDirection = GetExpectedCutDirection(_spawnSettings.CutDirection);
 
-            // Calculate the actual cutting direction and the expected direction
-            float angle = Vector3.Angle(velocity.normalized, expectedDirection);
+            // Get the actual cut direction
+            Vector3 normalizedDirection = velocity.normalized;
+
+            // Calculate the angle between the expected direction and the actual direction
+            float angle = Vector3.Angle(normalizedDirection, expectedDirection);
 
             // Correction recommendation: Logic about score magnification is not a View responsibility
             // It is conceivable to return a difference from the target angle
@@ -220,28 +223,28 @@ namespace BeatSaberClone.Presentation
             }
         }
 
-        // cutDirection: 0 = Down, 1 = Up, 2 = Right, 3 = Left
+        // cutDirection: 0 = Down to Up, 1 = Up to Down, 2 = Right to Left, 3 = Left to Right
         private float GetTargetRotationZ(int cutDirection)
         {
             return cutDirection switch
             {
                 0 => _slicedSettings.DownRotationZ,
-                1 => _slicedSettings.UpRotationZ,
+                1 => _slicedSettings.DefaultRotationZ,
                 2 => _slicedSettings.RightRotationZ,
                 3 => _slicedSettings.LeftRotationZ,
                 _ => 0f,
             };
         }
 
-        // cutDirection: 0 = Down, 1 = Up, 2 = Right, 3 = Left
+        // cutDirection: 0 = Down to Up, 1 = Up to Down, 2 = Right to Left, 3 = Left to Right
         private Vector3 GetExpectedCutDirection(int cutDirection)
         {
             return cutDirection switch
             {
-                0 => _slicedSettings.DownDirection,
-                1 => _slicedSettings.UpDirection,
-                2 => _slicedSettings.RightDirection,
-                3 => _slicedSettings.LeftDirection,
+                0 => _slicedSettings.UpDirection,
+                1 => _slicedSettings.DownDirection,
+                2 => _slicedSettings.LeftDirection,
+                3 => _slicedSettings.RightDirection,
                 _ => Vector3.zero,
             };
         }

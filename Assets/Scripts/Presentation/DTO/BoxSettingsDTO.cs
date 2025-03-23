@@ -27,7 +27,7 @@ namespace BeatSaberClone.Presentation
     {
         // Rotation angle for each cutting direction (Z-axis)
         public float DownRotationZ;
-        public float UpRotationZ;
+        public float DefaultRotationZ;
         public float RightRotationZ;
         public float LeftRotationZ;
 

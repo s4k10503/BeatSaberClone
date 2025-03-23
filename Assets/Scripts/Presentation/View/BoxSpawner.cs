@@ -81,7 +81,7 @@ namespace BeatSaberClone.Presentation
             _slicedSettings = new SlicedSettings
             {
                 DownRotationZ = boxSettings.DownRotationZ,
-                UpRotationZ = boxSettings.UpRotationZ,
+                DefaultRotationZ = boxSettings.DefaultRotationZ,
                 RightRotationZ = boxSettings.RightRotationZ,
                 LeftRotationZ = boxSettings.LeftRotationZ,
                 DownDirection = boxSettings.DownDirection,
