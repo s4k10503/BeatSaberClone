@@ -49,8 +49,8 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private float _downRotationZ = 180f;
         public float DownRotationZ => _downRotationZ;
 
-        [SerializeField] private float _upRotationZ = 0f;
-        public float UpRotationZ => _upRotationZ;
+        [SerializeField] private float _defaultRotationZ = 0f;
+        public float DefaultRotationZ => _defaultRotationZ;
 
         [SerializeField] private float _rightRotationZ = 90f;
         public float RightRotationZ => _rightRotationZ;
