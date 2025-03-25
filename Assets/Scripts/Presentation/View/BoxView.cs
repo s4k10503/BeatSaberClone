@@ -212,15 +212,14 @@ namespace BeatSaberClone.Presentation
 
             // Correction recommendation: Logic about score magnification is not a View responsibility
             // It is conceivable to return a difference from the target angle
-            if (angle <= _slicedSettings.AllowedAngle)
-            {
-                return 1f;
-            }
-            else
+            if (angle >= _slicedSettings.AllowedAngle)
             {
                 _onComboReset.OnNext(Unit.Default);
                 return 0f;
             }
+
+            float multiplier = 1f - (angle / _slicedSettings.AllowedAngle);
+            return multiplier;
         }
 
         // cutDirection: 0 = Down to Up, 1 = Up to Down, 2 = Right to Left, 3 = Left to Right

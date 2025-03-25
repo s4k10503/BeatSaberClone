@@ -29,6 +29,6 @@ MonoBehaviour:
   _upDirection: {x: 0, y: 1, z: 0}
   _rightDirection: {x: 1, y: 0, z: 0}
   _leftDirection: {x: -1, y: 0, z: 0}
-  _allowedAngle: 15
+  _allowedAngle: 45
   DestroyZCoordinates: -5
   DestroyDelayTime: 0.3
