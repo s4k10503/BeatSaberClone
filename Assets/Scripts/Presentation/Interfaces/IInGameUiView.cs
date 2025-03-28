@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace BeatSaberClone.Presentation
 {
@@ -12,5 +13,6 @@ namespace BeatSaberClone.Presentation
         void DispalyCombo(int combo);
         void DispalyComboMultiplier(float comboMultiplier);
         void UpdateComboProgress(float progress);
+        void DisplaySliceScore(Vector3 position, int score);
     }
 }

@@ -331,8 +331,12 @@ namespace BeatSaberClone.Presentation
 
             int slicerId = (slicer.Side == SlicerSide.Left) ? 0 : 1;
             float scoreMultiplier = boxView.CheckSliceDirection(slicer.Velocity, slicerId);
-            _scoreUseCase.UpdateScore(scoreMultiplier);
+            int sliceScore = _scoreUseCase.UpdateScore(scoreMultiplier);
             _scoreUseCase.UpdateCombo(scoreMultiplier);
+
+            // Display score based on box position
+            Vector3 displayPosition = hit.transform.position;
+            _inGameUiView.DisplaySliceScore(displayPosition, sliceScore);
         }
 
         #endregion

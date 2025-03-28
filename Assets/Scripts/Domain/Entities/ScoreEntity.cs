@@ -20,14 +20,16 @@ namespace BeatSaberClone.Domain
             ComboMultiplier = Combo.Select(CalculateComboMultiplier).ToReactiveProperty();
         }
 
-        public void AddScore(float multiplier)
+        public int AddScore(float multiplier)
         {
             if (multiplier < 0)
             {
                 throw new DomainException("Multiplier must be positive.");
             }
 
-            Score.Value += (int)(100 * multiplier * ComboMultiplier.Value);
+            int calculatedScore = (int)(100 * multiplier * ComboMultiplier.Value);
+            Score.Value += calculatedScore;
+            return calculatedScore;
         }
 
         public void AddCombo()
