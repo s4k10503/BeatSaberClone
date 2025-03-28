@@ -6,7 +6,7 @@ namespace BeatSaberClone.Domain
     {
         ScoreEntity CreateEntity(int initialScore, int initialCombo);
         ScoreEntity GetEntity(Guid id);
-        void UpdateScore(Guid id, float multiplier);
+        int UpdateScore(Guid id, float multiplier);
         void UpdateCombo(Guid id, float multiplier);
 
     }

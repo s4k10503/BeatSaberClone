@@ -28,7 +28,7 @@ namespace BeatSaberClone.Domain
             return _entities.TryGetValue(id, out var entity) ? entity : null;
         }
 
-        public void UpdateScore(Guid id, float multiplier)
+        public int UpdateScore(Guid id, float multiplier)
         {
             var entity = GetEntity(id);
             if (entity == null)
@@ -39,7 +39,7 @@ namespace BeatSaberClone.Domain
                 throw new DomainException("Multiplier must be over 0.");
             }
 
-            entity.AddScore(multiplier);
+            return entity.AddScore(multiplier);
         }
 
         public void UpdateCombo(Guid id, float multiplier)

@@ -14,7 +14,7 @@ namespace BeatSaberClone.UseCase
 
         UniTask SaveScore(CancellationToken ct);
         UniTask LoadScore(CancellationToken ct);
-        void UpdateScore(float multiplier);
+        int UpdateScore(float multiplier);
         void UpdateCombo(float multiplier);
     }
 }

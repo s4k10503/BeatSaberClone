@@ -92,14 +92,13 @@ namespace BeatSaberClone.UseCase
             }
         }
 
-        public void UpdateScore(float multiplier)
+        public int UpdateScore(float multiplier)
         {
-            _scoreService.UpdateScore(_entityId, multiplier);
+            return _scoreService.UpdateScore(_entityId, multiplier);
         }
 
         public void UpdateCombo(float multiplier)
         {
-
             _scoreService.UpdateCombo(_entityId, multiplier);
         }
     }

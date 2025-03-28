@@ -696,6 +696,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!223 &984405641 stripped
+Canvas:
+  m_CorrespondingSourceObject: {fileID: 8178115483864207336, guid: 0dcf4d72863776a4ea19ca628cb80a60, type: 3}
+  m_PrefabInstance: {fileID: 4116905505299885746}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &991038074 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 329651818454105317, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
@@ -1805,10 +1810,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fefdbce174786047a20b893702447f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _canvas: {fileID: 984405641}
   _timerTMP: {fileID: 1869549142}
   _scoreTMP: {fileID: 389101926}
   _comboTMP: {fileID: 570124821}
   _comboMultiplierTMP: {fileID: 77171777}
+  _sliceScorePrefab: {fileID: 47947021082231296, guid: 0dc52dd97f6187d4993bdf2b22f3de1b, type: 3}
+  _sliceScorePoolSize: 10
+  _sliceScoreDisplayDuration: 1
+  _sliceScoreForwardOffset: 5
+  _sliceScoreUpwardOffset: 0.5
   _progressBar: {fileID: 1001699379}
 --- !u!1001 &4116905505299885746
 PrefabInstance:
