@@ -190,7 +190,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2351505566771328527, guid: 4d7e2f87fefe0ba468719b15288b46e7, type: 3}
       propertyPath: far clip plane
-      value: 600
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 2351505566771328562, guid: 4d7e2f87fefe0ba468719b15288b46e7, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -725,13 +725,41 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4296061835189334601, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: InitialModule.maxNumParticles
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_RenderMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_EnableGPUInstancing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
       propertyPath: m_UseCustomVertexStreams
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 9aa1fd38af80d034c89b267ae41f7fe1, type: 2}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
       propertyPath: m_VertexStreams.Array.size
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4296061835189357545, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
+      propertyPath: m_VertexStreams.Array.data[4]
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 5375477159782348267, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1622,6 +1650,7 @@ MonoBehaviour:
   _parentPillarObjectL: {fileID: 991038074}
   _parentPillarObjectR: {fileID: 1295260854}
   _parentRingObject: {fileID: 1669118240}
+  _platformSpecificPrefab: {fileID: 6852608912492260200, guid: 1af6b334ac250d94b89eae729a2e0fe1, type: 3}
 --- !u!1001 &2018739805
 PrefabInstance:
   m_ObjectHideFlags: 0

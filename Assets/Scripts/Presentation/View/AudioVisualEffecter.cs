@@ -18,6 +18,9 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private GameObject _parentPillarObjectR;
         [SerializeField] private GameObject _parentRingObject;
 
+        [Header("Platform Specific Settings")]
+        [SerializeField] private GameObject _platformSpecificPrefab;
+
         private AudioVisualEffectParameters _audioVisualEffectParameters;
 
         private Color _baseColor;
@@ -96,6 +99,13 @@ namespace BeatSaberClone.Presentation
                 SetGlobalColors(false);
                 InitializeMaterial(_luminousMaterial, isLuminous: true);
                 InitializeMaterial(_smokeMaterial, isLuminous: false);
+
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX
+                if (_platformSpecificPrefab != null)
+                {
+                    Instantiate(_platformSpecificPrefab);
+                }
+#endif
             }
             catch (Exception ex)
             {
