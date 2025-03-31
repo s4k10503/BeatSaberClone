@@ -12,8 +12,17 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private Material _luminousMaterial;
         [SerializeField] private Material _smokeMaterial;
 
+        [Header("Color Settings")]
+        [SerializeField] private Color _materialBaseColor;
+        [SerializeField] private Color _materialFlashColor;
+        [SerializeField] private Color _lightBaseColor;
+        [SerializeField] private Color _lightFlashColor;
+        [SerializeField] private Color _fogBaseColor;
+        [SerializeField] private Color _fogFlashColor;
+
         [Header("Level Settings")]
         [SerializeField] private Light _directionalLight;
+        [SerializeField] private Light _pointlLight;
         [SerializeField] private GameObject _parentPillarObjectL;
         [SerializeField] private GameObject _parentPillarObjectR;
         [SerializeField] private GameObject _parentRingObject;
@@ -23,10 +32,7 @@ namespace BeatSaberClone.Presentation
 
         private AudioVisualEffectParameters _audioVisualEffectParameters;
 
-        private Color _baseColor;
-        private Color _flashColor;
         private float _intensityScale;
-
         private float _scaleMultiplier;
         private float _lerpSpeed;
         private float _rotationAngleMultiplier;
@@ -36,8 +42,6 @@ namespace BeatSaberClone.Presentation
 
         private List<List<GameObject>> _pillarGroups = new();
         private List<GameObject> _ringGroup = new();
-
-        private Color _baseLightColor;
 
         // Structures for integrating fields of luminescent information
         private struct EmissionInfo
@@ -61,8 +65,12 @@ namespace BeatSaberClone.Presentation
             {
                 _audioVisualEffectParameters = audioVisualEffectParameters;
 
-                _baseColor = _audioVisualEffectParameters.BaseColor;
-                _flashColor = _audioVisualEffectParameters.FlashColor;
+                _materialBaseColor = _audioVisualEffectParameters.MaterialBaseColor;
+                _materialFlashColor = _audioVisualEffectParameters.MaterialFlashColor;
+                _lightBaseColor = _audioVisualEffectParameters.LightBaseColor;
+                _lightFlashColor = _audioVisualEffectParameters.LightFlashColor;
+                _fogBaseColor = _audioVisualEffectParameters.FogBaseColor;
+                _fogFlashColor = _audioVisualEffectParameters.FogFlashColor;
 
                 _intensityScale = _audioVisualEffectParameters.IntensityScale;
                 _scaleMultiplier = _audioVisualEffectParameters.ScaleMultiplier;
@@ -83,9 +91,6 @@ namespace BeatSaberClone.Presentation
         {
             try
             {
-                if (_directionalLight != null)
-                    _baseLightColor = _directionalLight.color;
-
                 if (_parentPillarObjectL != null)
                     _pillarGroups.Add(GetChildGameObjects(_parentPillarObjectL));
 
@@ -137,6 +142,7 @@ namespace BeatSaberClone.Presentation
             try
             {
                 SetGlobalColors(false);
+                RenderSettings.fogColor = _fogBaseColor;
                 RestoreMaterialEmission(_luminousMaterial, _luminousEmission.OriginalColor);
                 RestoreMaterialEmission(_smokeMaterial, _smokeEmission.OriginalColor);
 
@@ -145,6 +151,8 @@ namespace BeatSaberClone.Presentation
                 _parentPillarObjectL = null;
                 _parentPillarObjectR = null;
                 _directionalLight = null;
+                _pointlLight = null;
+                _parentRingObject = null;
             }
             catch (Exception ex)
             {
@@ -270,15 +278,21 @@ namespace BeatSaberClone.Presentation
             {
                 if (flash)
                 {
-                    RenderSettings.fogColor = _flashColor;
-                    if (_directionalLight != null)
-                        _directionalLight.color = _flashColor;
+                    RenderSettings.fogColor = _fogFlashColor;
+                    if (_directionalLight != null && _pointlLight != null)
+                    {
+                        _pointlLight.color = _lightFlashColor;
+                        _directionalLight.color = _lightFlashColor;
+                    }
                 }
                 else
                 {
-                    RenderSettings.fogColor = _baseColor;
-                    if (_directionalLight != null)
-                        _directionalLight.color = _baseLightColor;
+                    RenderSettings.fogColor = _fogBaseColor;
+                    if (_directionalLight != null && _pointlLight != null)
+                    {
+                        _pointlLight.color = _lightBaseColor;
+                        _directionalLight.color = _lightBaseColor;
+                    }
                 }
             }
             catch (Exception ex)
@@ -294,7 +308,9 @@ namespace BeatSaberClone.Presentation
             {
                 if (material != null && material.HasProperty("_EmissionColor"))
                 {
-                    Color emission = flash ? NormalizeColor(_flashColor) * baseIntensity : baseNormalized * baseIntensity;
+                    Color emission = flash ?
+                        NormalizeColor(_materialFlashColor) * baseIntensity :
+                        NormalizeColor(_materialBaseColor) * baseIntensity;
                     material.SetColor("_EmissionColor", emission);
                 }
             }
