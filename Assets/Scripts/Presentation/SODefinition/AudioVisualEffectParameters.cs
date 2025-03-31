@@ -8,8 +8,13 @@ namespace BeatSaberClone.Presentation
     {
         [Header("Common Settings")]
         public float IntensityScale = 100.0f;
-        public Color BaseColor = Color.blue;
-        public Color FlashColor = Color.red;
+        public Color MaterialBaseColor = Color.blue;
+        public Color MaterialFlashColor = Color.red;
+        public Color LightBaseColor = Color.blue;
+        public Color LightFlashColor = Color.red;
+        public Color FogBaseColor = Color.blue;
+        public Color FogFlashColor = Color.red;
+
 
         [Header("Light Effect Settings")]
         public float MaxLightIntensity = 3.0f;
