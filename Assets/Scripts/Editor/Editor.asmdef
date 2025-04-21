@@ -2,9 +2,12 @@
     "name": "Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:43524a6b518260d429e864634b8e2c5d"
+        "GUID:43524a6b518260d429e864634b8e2c5d",
+        "UnityEditor.UI"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

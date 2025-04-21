@@ -1,12 +1,14 @@
-using NSubstitute;
 using NUnit.Framework;
+using NSubstitute;
 using BeatSaberClone.Domain;
 using BeatSaberClone.UseCase;
 using System;
-using Cysharp.Threading.Tasks;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine.TestTools;
 using System.Collections;
+using BeatSaberClone.Infrastructure;
+using UniRx;
 
 namespace BeatSaberClone.Tests
 {
@@ -14,107 +16,78 @@ namespace BeatSaberClone.Tests
     public sealed class ScoreUseCaseTests
     {
         private IScoreRepository _mockScoreRepository;
-        private IScoreService _mockScoreService;
+        private ScoreService _scoreService;
         private ScoreUseCase _scoreUseCase;
-        private Guid _entityId;
 
         [SetUp]
         public void SetUp()
         {
-            // Mock creation
             _mockScoreRepository = Substitute.For<IScoreRepository>();
-            _mockScoreService = Substitute.For<IScoreService>();
-
-            // Set Createentity with mock
-            var scoreEntity = new ScoreEntity(Guid.NewGuid(), 0, 0, 1);
-            _mockScoreService.CreateEntity(0, 0).Returns(scoreEntity);
-            _mockScoreService.GetEntity(scoreEntity.Id).Returns(scoreEntity);
-            _entityId = scoreEntity.Id;
-
-            // Set the mock Updatescore operation
-            _mockScoreService
-                .When(x => x.UpdateScore(Arg.Any<Guid>(), Arg.Any<float>()))
-                .Do(callInfo =>
-                {
-                    var id = callInfo.ArgAt<Guid>(0);
-                    var multiplier = callInfo.ArgAt<float>(1);
-                    var entity = _mockScoreService.GetEntity(id);
-                    entity?.AddScore(multiplier);
-                });
-
-            // Set mock UpdateCombo operation
-            _mockScoreService
-                .When(x => x.UpdateCombo(Arg.Any<Guid>(), Arg.Any<float>()))
-                .Do(callInfo =>
-                {
-                    var id = callInfo.ArgAt<Guid>(0);
-                    var multiplier = callInfo.ArgAt<float>(1);
-                    var entity = _mockScoreService.GetEntity(id);
-                    if (multiplier == 0)
-                        entity?.ResetCombo();
-                    else
-                        entity?.AddCombo();
-                });
-
-            // Initialize the class to be tested
+            _scoreService = new ScoreService();
             _scoreUseCase = new ScoreUseCase(
                 _mockScoreRepository,
-                _mockScoreService);
+                _scoreService);
+
+            Assert.AreEqual(0, _scoreUseCase.CurrentScore.Value);
+            Assert.AreEqual(0, _scoreUseCase.CurrentCombo.Value);
+            Assert.AreEqual(1.0f, _scoreUseCase.CurrentComboMultiplier.Value);
         }
 
         [TearDown]
         public void TearDown()
         {
-            _mockScoreRepository = null;
-            _mockScoreService = null;
-            _scoreUseCase = null;
+            _scoreService.Dispose();
         }
 
         [Test]
-        public void UpdateScore_WithPositiveMultiplier_ShouldCallUpdateScoreOnService()
+        public void UpdateScore_ShouldCorrectlyUpdateScore()
         {
             // Arrange
-            float multiplier = 2.0f;
+            _scoreUseCase.UpdateCombo(1.0f);
+            float accuracy = 0.9f;
 
             // Act
-            _scoreUseCase.UpdateScore(multiplier);
+            _scoreUseCase.UpdateScore(accuracy);
 
             // Assert
-            _mockScoreService.Received(1).UpdateScore(_entityId, multiplier);
+            var score = new Score(0);
+            var expectedScore = score.Add(score.CalculatePoints(accuracy, 1.0f)).Value;
+            Assert.AreEqual(expectedScore, _scoreUseCase.CurrentScore.Value);
         }
 
         [Test]
-        public void UpdateCombo_WithPositiveMultiplier_ShouldCallUpdateComboOnService()
+        public void UpdateCombo_WithPositiveMultiplier_ShouldIncreaseCombo()
         {
             // Arrange
+            Assert.AreEqual(0, _scoreUseCase.CurrentCombo.Value);
             float multiplier = 1.0f;
 
             // Act
             _scoreUseCase.UpdateCombo(multiplier);
 
             // Assert
-            _mockScoreService.Received(1).UpdateCombo(_entityId, multiplier);
+            Assert.AreEqual(1, _scoreUseCase.CurrentCombo.Value);
         }
 
         [Test]
         public void UpdateCombo_WithZeroMultiplier_ShouldResetCombo()
         {
             // Arrange
-            float multiplier = 0.0f;
+            _scoreUseCase.UpdateCombo(1.0f);
+            Assert.AreEqual(1, _scoreUseCase.CurrentCombo.Value);
 
             // Act
-            _scoreUseCase.UpdateCombo(multiplier);
+            _scoreUseCase.UpdateCombo(0.0f);
 
             // Assert
-            _mockScoreService.Received(1).UpdateCombo(_entityId, multiplier);
+            Assert.AreEqual(0, _scoreUseCase.CurrentCombo.Value);
         }
 
         [UnityTest]
-        public IEnumerator LoadScore_ShouldRestoreStateFromRepository() => UniTask.ToCoroutine(async () =>
+        public IEnumerator LoadScore_ShouldRestoreState() => UniTask.ToCoroutine(async () =>
         {
             // Arrange
-            var scoreEntity = new ScoreEntity(Guid.NewGuid(), 200, 2, 2);
-
+            var scoreEntity = new ScoreEntity(Guid.NewGuid(), 200, 2, 2.0f, 2);
             _mockScoreRepository
                 .LoadScore(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(scoreEntity));
@@ -127,5 +100,89 @@ namespace BeatSaberClone.Tests
             Assert.AreEqual(2, _scoreUseCase.CurrentCombo.Value);
             Assert.AreEqual(2.0f, _scoreUseCase.CurrentComboMultiplier.Value);
         });
+
+        [Test]
+        public void CreateAndUpdateScore_WithAccuracyRanges_ShouldApplyCorrectMultipliers()
+        {
+            var entity1 = _scoreService.CreateEntity();
+            var entity2 = _scoreService.CreateEntity();
+            var entity3 = _scoreService.CreateEntity();
+
+            // Test middle accuracy
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateScore(0.65f);
+            Assert.AreEqual(65, _scoreUseCase.CurrentScore.Value, "Accuracy 0.65 should give 65 points");
+
+            // Test minimum accuracy
+            _scoreUseCase = new ScoreUseCase(_mockScoreRepository, _scoreService);
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateScore(0.6f);
+            Assert.AreEqual(60, _scoreUseCase.CurrentScore.Value, "Accuracy 0.6 should give 60 points");
+
+            // Test maximum accuracy
+            _scoreUseCase = new ScoreUseCase(_mockScoreRepository, _scoreService);
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateScore(1.0f);
+            Assert.AreEqual(100, _scoreUseCase.CurrentScore.Value, "Accuracy 1.0 should give 100 points");
+        }
+
+        [Test]
+        public void UpdateScore_WithInvalidAccuracy_ShouldThrowException()
+        {
+            Assert.Throws<DomainException>(() => _scoreUseCase.UpdateScore(1.1f));
+        }
+
+        [Test]
+        public void UpdateScore_WithMultipleCombos_ShouldMultiplyScore()
+        {
+            // Set combo to 3 (which falls in Tier1: multiplier 2.0)
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateCombo(1.0f);
+
+            _scoreUseCase.UpdateScore(0.9f);
+            Assert.AreEqual(180, _scoreUseCase.CurrentScore.Value); // 100 * 0.9 * 2.0
+        }
+
+        [Test]
+        public void UpdateScore_AfterComboReset_ShouldCalculateWithNewCombo()
+        {
+            // Set combo to 3
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateCombo(1.0f);
+
+            // Reset combo
+            _scoreUseCase.UpdateCombo(0.0f);
+
+            // New combo
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateScore(0.9f);
+            Assert.AreEqual(90, _scoreUseCase.CurrentScore.Value); // 100 * 0.9 * 1.0
+        }
+
+        [Test]
+        public void UpdateCombo_WithZeroAccuracy_ShouldResetCombo()
+        {
+            _scoreUseCase.UpdateCombo(1.0f);
+            _scoreUseCase.UpdateCombo(1.0f);
+
+            _scoreUseCase.UpdateCombo(0.0f);
+
+            Assert.AreEqual(0, _scoreUseCase.CurrentCombo.Value);
+        }
+
+        [Test]
+        public void UpdateCombo_WithNonZeroAccuracy_ShouldIncreaseCombo()
+        {
+            _scoreUseCase.UpdateCombo(1.0f);
+            Assert.AreEqual(1, _scoreUseCase.CurrentCombo.Value);
+        }
+
+        [Test]
+        public void UpdateCombo_WithInvalidAccuracy_ShouldThrowException()
+        {
+            Assert.Throws<DomainException>(() => _scoreUseCase.UpdateCombo(1.1f));
+        }
     }
 }

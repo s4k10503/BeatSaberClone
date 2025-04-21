@@ -12,17 +12,34 @@ namespace BeatSaberClone.Installer
         [SerializeField] private AudioClipList _audioClipList;
         [SerializeField] private HapticSettings _hapticSettings;
 
-        [Header("AudioSouce")]
+        [Header("AudioSource")]
         [SerializeField] private AudioSource _trackSource;
-        [SerializeField] private AudioSource _soudEffectSource;
+        [SerializeField] private AudioSource _soundEffectSource;
 
+        [Header("FFT Settings")]
         [Tooltip("FFT resolution must be a power of two between 64 and 8192.")]
         [SerializeField] private FFTResolution _fftResolution = FFTResolution._512;
-        [SerializeField] private FFTWindow _fftWindow = FFTWindow.Triangle;
+        [SerializeField] private FFTWindowType _fftWindowType = FFTWindowType.Triangle;
 
         public override void InstallBindings()
         {
-            // Repository
+            // Audio Source Wrappers
+            var trackWrapper = new AudioSourceWrapper(_trackSource);
+            var effectWrapper = new AudioSourceWrapper(_soundEffectSource);
+
+            Container
+                .Bind<IAudioSource>()
+                .WithId("TrackSource")
+                .FromInstance(trackWrapper)
+                .AsCached();
+
+            Container
+                .Bind<IAudioSource>()
+                .WithId("SeSource")
+                .FromInstance(effectWrapper)
+                .AsCached();
+
+            // Repositories
             Container
                 .Bind<IExceptionHandler>()
                 .To<ExceptionHandler>()
@@ -48,8 +65,8 @@ namespace BeatSaberClone.Installer
                 .AsSingle();
 
             Container
-                .Bind<ISoundVolumeRepository>()
-                .To<JsonSoundVolumeRepository>()
+                .Bind<IAudioVolumeRepository>()
+                .To<JsonAudioVolumeRepository>()
                 .FromNew()
                 .AsSingle();
 
@@ -57,10 +74,21 @@ namespace BeatSaberClone.Installer
                 .Bind<AudioClipList>()
                 .FromInstance(_audioClipList);
 
-            // Service
+            // Services
             Container
                 .BindInterfacesTo<ScoreService>()
                 .FromNew()
+                .AsSingle();
+
+            Container
+                .Bind<ILoggerService>()
+                .To<LoggerService>()
+                .FromNew()
+                .AsSingle();
+
+            Container
+                .Bind<IAudioService>()
+                .To<AudioService>()
                 .AsSingle();
 
             Container
@@ -93,19 +121,14 @@ namespace BeatSaberClone.Installer
                 .AsSingle();
 
             Container
-                .Bind<ILoggerService>()
-                .To<LoggerService>()
-                .AsSingle();
-
-            Container
                 .Bind<FFTResolution>()
                 .FromInstance(_fftResolution);
 
             Container
-                .Bind<FFTWindow>()
-                .FromInstance(_fftWindow);
+                .Bind<FFTWindowType>()
+                .FromInstance(_fftWindowType);
 
-            // UseCase
+            // Use Cases
             Container
                 .BindInterfacesTo<ExceptionHandlingUseCase>()
                 .FromNew()
@@ -127,7 +150,7 @@ namespace BeatSaberClone.Installer
                 .WithArguments(_hapticSettings.HapticDuration, _hapticSettings.HapticIntensity);
 
             Container
-                .BindInterfacesTo<SoundUseCase>()
+                .BindInterfacesTo<AudioUseCase>()
                 .FromNew()
                 .AsSingle();
 
@@ -140,16 +163,6 @@ namespace BeatSaberClone.Installer
                 .BindInterfacesTo<ViewLogUseCase>()
                 .FromNew()
                 .AsSingle();
-
-            Container
-                .Bind<AudioSource>()
-                .WithId("TrackSource")
-                .FromInstance(_trackSource);
-
-            Container
-                .Bind<AudioSource>()
-                .WithId("SeSource")
-                .FromInstance(_soudEffectSource);
         }
     }
 }

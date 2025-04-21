@@ -4,25 +4,27 @@ using BeatSaberClone.Domain;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace BeatSaberClone.UseCase
 {
     public sealed class ScoreUseCase : IScoreUseCase, IDisposable
     {
         public IReadOnlyReactiveProperty<int> CurrentScore
-            => _scoreService.GetEntity(_entityId)?.Score;
+            => _scoreService.GetEntity(_entityId)?.Value;
         public IReadOnlyReactiveProperty<int> CurrentCombo
-            => _scoreService.GetEntity(_entityId)?.Combo;
+            => _scoreService.GetEntity(_entityId)?.ComboCount;
         public IReadOnlyReactiveProperty<float> CurrentComboMultiplier
             => _scoreService.GetEntity(_entityId)?.ComboMultiplier;
+        public IReadOnlyReactiveProperty<float> CurrentAccuracy
+            => _scoreService.GetEntity(_entityId)?.Accuracy;
 
-        public IReadOnlyReactiveProperty<float> CurrentComboProgress { get; }
+        public IReadOnlyReactiveProperty<float> CurrentComboProgress => _comboProgress;
 
-        private readonly Guid _entityId;
+        private Guid _entityId;
         private readonly IScoreService _scoreService;
         private readonly IScoreRepository _scoreRepository;
         private readonly CompositeDisposable _disposables = new();
+        private readonly ReactiveProperty<float> _comboProgress;
 
         [Inject]
         public ScoreUseCase(
@@ -32,74 +34,63 @@ namespace BeatSaberClone.UseCase
             _scoreRepository = scoreRepository;
             _scoreService = scoreDomainService;
 
-            var entity = _scoreService.CreateEntity(0, 0)
+            var entity = _scoreService.CreateEntity(0, 0, 1.0f)
                 ?? throw new InvalidOperationException("Failed to create ScoreEntity.");
             _entityId = entity.Id;
 
-            CurrentComboProgress = Observable.CombineLatest(
-                entity.Combo, entity.ComboMultiplier,
-                (combo, multiplier) =>
-                {
-                    if (multiplier == 1f)
-                    {
-                        // In the case of 0 to 1, 0 to 2 to make it easier to understand the progress.
-                        return combo / 2f;
-                    }
-                    else if (multiplier == 2f)
-                    {
-                        // Combo 2-5 (width 3)
-                        return (combo - 2) / 3f;
-                    }
-                    else if (multiplier == 4f)
-                    {
-                        // Combo 6-13 (width 7)
-                        return (combo - 6) / 7f;
-                    }
-                    else if (multiplier == 8f)
-                    {
-                        // Assuming combo 14-21 (width 7)
-                        return Mathf.Clamp01((combo - 14) / 7f);
-                    }
-                    return 0f;
-                })
-                .ToReactiveProperty();
+            _comboProgress = new ReactiveProperty<float>();
+            _comboProgress.AddTo(_disposables);
+
+            entity.ComboProgress
+                .Subscribe(x => _comboProgress.Value = x)
+                .AddTo(_disposables);
         }
 
         public void Dispose()
         {
             _disposables.Dispose();
-            _scoreService.Dispose();
-            _scoreRepository.Dispose();
         }
 
         public async UniTask SaveScore(CancellationToken ct)
         {
             var entity = _scoreService.GetEntity(_entityId);
+            if (entity == null) return;
             await _scoreRepository.SaveScore(entity, ct);
         }
 
         public async UniTask LoadScore(CancellationToken ct)
         {
-            var loadedEntity = await _scoreRepository.LoadScore(ct);
-            if (loadedEntity != null)
-            {
-                var entity = _scoreService.GetEntity(_entityId);
-                if (entity != null)
-                {
-                    entity.Score.Value = loadedEntity.Score.Value;
-                    entity.Combo.Value = loadedEntity.Combo.Value;
-                }
-            }
+            var entity = await _scoreRepository.LoadScore(ct);
+            if (entity == null) return;
+            var newEntity = _scoreService.CreateEntity(entity.Value.Value, entity.ComboCount.Value, entity.Accuracy.Value);
+            _entityId = newEntity.Id;
         }
 
-        public int UpdateScore(float multiplier)
+        public int UpdateScore(float accuracy)
         {
-            return _scoreService.UpdateScore(_entityId, multiplier);
+            var entity = _scoreService.GetEntity(_entityId);
+            if (entity == null) return 0;
+
+            // Calculate note score before updating
+            var noteScore = new Score(0).CalculatePoints(accuracy, entity.ComboMultiplier.Value);
+
+            // Update the score
+            _scoreService.UpdateScore(_entityId, accuracy);
+
+            // Return the note score value
+            return noteScore.Value;
         }
 
-        public void UpdateCombo(float multiplier)
+        public int GetNoteScore(float accuracy)
         {
-            _scoreService.UpdateCombo(_entityId, multiplier);
+            var entity = _scoreService.GetEntity(_entityId);
+            if (entity == null) return 0;
+            return new Score(0).CalculatePoints(accuracy, entity.ComboMultiplier.Value).Value;
+        }
+
+        public void UpdateCombo(float accuracy)
+        {
+            _scoreService.UpdateCombo(_entityId, accuracy);
         }
     }
 }

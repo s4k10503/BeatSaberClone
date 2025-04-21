@@ -2,8 +2,8 @@ using NUnit.Framework;
 using UnityEngine;
 using BeatSaberClone.Domain;
 using BeatSaberClone.Infrastructure;
-using UnityEngine.TestTools;
 using System.Linq;
+using NSubstitute;
 
 namespace BeatSaberClone.Tests
 {
@@ -11,24 +11,22 @@ namespace BeatSaberClone.Tests
     public sealed class AudioDataProcessorTests
     {
         private AudioDataProcessor _audioDataProcessor;
-        private AudioSource _audioSource;
+        private IAudioSource _audioSource;
         private FFTResolution _fftResolution;
-        private FFTWindow _fftWindow;
+        private FFTWindowType _fftWindow;
 
         [SetUp]
         public void SetUp()
         {
-            var gameObject = new GameObject();
-            _audioSource = gameObject.AddComponent<AudioSource>();
+            _audioSource = Substitute.For<IAudioSource>();
             _fftResolution = FFTResolution._1024;
-            _fftWindow = FFTWindow.Hamming;
+            _fftWindow = FFTWindowType.Hamming;
             _audioDataProcessor = new AudioDataProcessor(_audioSource, _fftResolution, _fftWindow);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(_audioSource.gameObject);
             _audioDataProcessor = null;
             _audioSource = null;
         }
@@ -37,7 +35,7 @@ namespace BeatSaberClone.Tests
         public void Initialize_WhenAudioClipIsNotNull_InitializesSpectrumData()
         {
             // Arrange
-            _audioSource.clip = AudioClip.Create("TestClip", 44100, 1, 44100, false);
+            _audioSource.Samples.Returns(44100);
 
             // Assert
             Assert.IsNotNull(_audioDataProcessor.SpectrumData);
@@ -48,20 +46,29 @@ namespace BeatSaberClone.Tests
         public void Initialize_WhenAudioClipIsNull_DoesNotInitializeSpectrumData()
         {
             // Arrange
-            _audioSource.clip = null;
+            _audioSource.Samples.Returns(0);
 
             // Assert
             Assert.IsNotNull(_audioDataProcessor.SpectrumData);
             Assert.IsTrue(_audioDataProcessor.SpectrumData.All(x => x == 0f));
         }
 
-
         [Test]
         public void UpdateSpectrumData_WhenAudioIsPlaying_UpdatesSpectrumData()
         {
             // Arrange
-            _audioSource.clip = AudioClip.Create("TestClip", 44100, 1, 44100, false);
-            _audioSource.Play();
+            _audioSource.IsPlaying.Returns(true);
+            _audioSource.TimeSamples.Returns(0);
+            _audioSource.Samples.Returns(44100);
+            _audioSource.When(x => x.GetSpectrumData(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<FFTWindowType>()))
+                .Do(x =>
+                {
+                    var samples = x.Arg<float[]>();
+                    for (int i = 0; i < samples.Length; i++)
+                    {
+                        samples[i] = 1.0f;
+                    }
+                });
 
             // Act
             _audioDataProcessor.UpdateSpectrumData();
@@ -69,43 +76,30 @@ namespace BeatSaberClone.Tests
             // Assert
             Assert.IsNotNull(_audioDataProcessor.SpectrumData);
             Assert.IsTrue(_audioDataProcessor.SpectrumData.Length > 0);
-            bool hasNonZeroValue = false;
-            foreach (var value in _audioDataProcessor.SpectrumData)
-            {
-                if (value != 0f)
-                {
-                    hasNonZeroValue = true;
-                    break;
-                }
-            }
-            Assert.IsTrue(hasNonZeroValue, "SpectrumData should contain non-zero values when audio is playing.");
+            Assert.IsTrue(_audioDataProcessor.SpectrumData.All(x => x == 1.0f));
         }
 
         [Test]
         public void UpdateSpectrumData_WhenAudioIsNotPlaying_ClearsSpectrumData()
         {
             // Arrange
-            _audioSource.clip = AudioClip.Create("TestClip", 44100, 1, 44100, false);
-            _audioSource.Stop();
+            _audioSource.IsPlaying.Returns(false);
+            _audioSource.Samples.Returns(44100);
 
             // Act
             _audioDataProcessor.UpdateSpectrumData();
 
             // Assert
-            foreach (var value in _audioDataProcessor.SpectrumData)
-            {
-                Assert.AreEqual(0f, value);
-            }
+            Assert.IsTrue(_audioDataProcessor.SpectrumData.All(x => x == 0f));
         }
 
         [Test]
         public void CalculateAverageSpectrum_WhenSpectrumDataIsInitialized_ReturnsCorrectAverage()
         {
             // Arrange
-            _audioSource.clip = AudioClip.Create("TestClip", 44100, 1, 44100, false);
             for (int i = 0; i < _audioDataProcessor.SpectrumData.Length; i++)
             {
-                _audioDataProcessor.SpectrumData[i] = 1f; // Fill with sample data
+                _audioDataProcessor.SpectrumData[i] = 1f;
             }
 
             // Act

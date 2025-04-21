@@ -417,9 +417,9 @@ MonoBehaviour:
   _audioClipList: {fileID: 11400000, guid: 6e8c0dc907797a145b7346a0c480fb72, type: 2}
   _hapticSettings: {fileID: 11400000, guid: 5b3aafdbc97554b4d97427f8ba55f6a1, type: 2}
   _trackSource: {fileID: 1371467994}
-  _soudEffectSource: {fileID: 8196995948472994839}
+  _soundEffectSource: {fileID: 8196995948472994839}
   _fftResolution: 512
-  _fftWindow: 1
+  _fftWindowType: 1
 --- !u!4 &460463262 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4947655081850552454, guid: 32e465ca768ee2f448586bef6312e4b3, type: 3}
@@ -810,6 +810,8 @@ MonoBehaviour:
   _audioVisualEffectParameters: {fileID: 11400000, guid: 6203238a72699714b8abc1b85c6037a7, type: 2}
   _leftBoxPrefab: {fileID: 3395242842393557912, guid: 996bfde193f7e6144a6a508ab5ce33dc, type: 3}
   _rightBoxPrefab: {fileID: 2692409981159396396, guid: 663c43337e4e67a4d9444a066c5ddab2, type: 3}
+  _initialPoolSize: 20
+  _maxPoolSize: 50
 --- !u!4 &1065511341
 Transform:
   m_ObjectHideFlags: 0

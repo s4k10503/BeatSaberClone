@@ -27,8 +27,8 @@ namespace BeatSaberClone.Infrastructure
             {
                 var scoreContainer = new ScoreContainer
                 {
-                    Score = scoreEntity.Score.Value,
-                    MaxCombo = scoreEntity.MaxCombo.Value
+                    Score = scoreEntity.Value.Value,
+                    MaxValue = scoreEntity.MaxValue.Value
                 };
 
                 string json = JsonUtility.ToJson(scoreContainer);
@@ -49,18 +49,18 @@ namespace BeatSaberClone.Infrastructure
 
                 if (!File.Exists(path))
                 {
-                    throw new InfrastructureException("Score file not found.");
+                    return null;
                 }
 
                 string json = await File.ReadAllTextAsync(path, ct);
-                ScoreContainer loadedScore = JsonUtility.FromJson<ScoreContainer>(json)
-                    ?? throw new InfrastructureException("Loaded score data is invalid.");
+                var scoreContainer = JsonUtility.FromJson<ScoreContainer>(json);
 
                 return new ScoreEntity(
                     Guid.NewGuid(),
-                    loadedScore.Score,
-                    0,
-                    loadedScore.MaxCombo
+                    scoreContainer.Score,
+                    0,  // initial combo
+                    1.0f,  // initial accuracy
+                    scoreContainer.MaxValue  // max value
                 );
             }
             catch (Exception ex)
