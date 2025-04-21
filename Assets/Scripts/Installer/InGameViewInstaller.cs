@@ -14,6 +14,10 @@ namespace BeatSaberClone.Installer
         [SerializeField] private GameObject _leftBoxPrefab;
         [SerializeField] private GameObject _rightBoxPrefab;
 
+        [Header("Pool Settings")]
+        [SerializeField] private int _initialPoolSize = 20;
+        [SerializeField] private int _maxPoolSize = 50;
+
         public override void InstallBindings()
         {
             // View
@@ -33,17 +37,20 @@ namespace BeatSaberClone.Installer
                 .Bind<CustomBoxViewPool>()
                 .AsSingle();
 
+            // Memory Pools
             Container.BindMemoryPool<BoxView, BoxView.BoxPool>()
                 .WithId("LeftBox")
-                .WithInitialSize(10)
+                .WithInitialSize(_initialPoolSize)
+                .WithMaxSize(_maxPoolSize)
                 .FromComponentInNewPrefab(_leftBoxPrefab);
-
 
             Container.BindMemoryPool<BoxView, BoxView.BoxPool>()
                 .WithId("RightBox")
-                .WithInitialSize(10)
+                .WithInitialSize(_initialPoolSize)
+                .WithMaxSize(_maxPoolSize)
                 .FromComponentInNewPrefab(_rightBoxPrefab);
 
+            // Effects
             Container
                 .Bind<IAudioVisualEffecter>()
                 .To<AudioVisualEffecter>()

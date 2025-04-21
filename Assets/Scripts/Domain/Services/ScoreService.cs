@@ -1,57 +1,62 @@
 using System;
 using System.Collections.Generic;
+using UniRx;
 
 namespace BeatSaberClone.Domain
 {
-    public sealed class ScoreService : IScoreService
+    public sealed class ScoreService : IScoreService, IDisposable
     {
-        private readonly Dictionary<Guid, ScoreEntity> _entities;
+        private readonly Dictionary<Guid, ScoreEntity> _entities = new Dictionary<Guid, ScoreEntity>();
 
-        public ScoreService()
+        public ScoreEntity CreateEntity(int initialScore = 0, int initialCombo = 0, float initialAccuracy = 1.0f)
         {
-            _entities = new Dictionary<Guid, ScoreEntity>();
+            var entity = new ScoreEntity(Guid.NewGuid(), initialScore, initialCombo, initialAccuracy, 0);
+            _entities.Add(entity.Id, entity);
+            return entity;
         }
 
-        public void Dispose()
+        public ScoreEntity CreateEntityWithId(Guid id, int initialScore, int initialCombo, float initialAccuracy)
         {
-        }
+            if (_entities.ContainsKey(id))
+            {
+                throw new DomainException($"Entity with ID {id} already exists.");
+            }
 
-        public ScoreEntity CreateEntity(int initialScore, int initialCombo)
-        {
-            var entity = new ScoreEntity(Guid.NewGuid(), initialScore, initialCombo);
-            _entities[entity.Id] = entity;
+            var entity = new ScoreEntity(id, initialScore, initialCombo, initialAccuracy, 0);
+            _entities.Add(entity.Id, entity);
             return entity;
         }
 
         public ScoreEntity GetEntity(Guid id)
         {
-            return _entities.TryGetValue(id, out var entity) ? entity : null;
+            if (!_entities.TryGetValue(id, out var entity))
+            {
+                throw new DomainException($"ScoreEntity with ID {id} not found.");
+            }
+            return entity;
         }
 
-        public int UpdateScore(Guid id, float multiplier)
+        public int UpdateScore(Guid id, float accuracy)
         {
+            if (accuracy < 0 || accuracy > 1)
+            {
+                throw new DomainException("Accuracy must be between 0 and 1.");
+            }
+
             var entity = GetEntity(id);
-            if (entity == null)
-                throw new DomainException("I can't find an entity.");
-
-            if (multiplier < 0)
-            {
-                throw new DomainException("Multiplier must be over 0.");
-            }
-
-            return entity.AddScore(multiplier);
+            entity.UpdateAccuracy(accuracy);
+            return entity.Value.Value;
         }
 
-        public void UpdateCombo(Guid id, float multiplier)
+        public void UpdateCombo(Guid id, float accuracy)
         {
-            var entity = GetEntity(id) ?? throw new DomainException("I can't find an entity.");
-
-            if (multiplier < 0)
+            if (accuracy < 0 || accuracy > 1)
             {
-                throw new DomainException("Multiplier cannot be negative values.");
+                throw new DomainException("Accuracy must be between 0 and 1.");
             }
 
-            if (multiplier == 0)
+            var entity = GetEntity(id);
+            if (accuracy == 0)
             {
                 entity.ResetCombo();
             }
@@ -59,6 +64,24 @@ namespace BeatSaberClone.Domain
             {
                 entity.AddCombo();
             }
+        }
+
+        public void RegisterEntity(ScoreEntity entity)
+        {
+            if (_entities.ContainsKey(entity.Id))
+            {
+                _entities[entity.Id].Dispose();
+            }
+            _entities[entity.Id] = entity;
+        }
+
+        public void Dispose()
+        {
+            foreach (var entity in _entities.Values)
+            {
+                entity.Dispose();
+            }
+            _entities.Clear();
         }
     }
 }

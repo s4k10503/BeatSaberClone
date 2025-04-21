@@ -5,6 +5,6 @@ namespace BeatSaberClone.Domain
     public sealed class ScoreContainer
     {
         public int Score;
-        public int MaxCombo;
+        public int MaxValue;
     }
 }

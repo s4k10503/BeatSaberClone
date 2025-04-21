@@ -1,10 +1,11 @@
-using UnityEngine;
+using System;
 
 namespace BeatSaberClone.Domain
 {
-    public interface IAudioClipRepository
+    public interface IAudioClipRepository : IDisposable
     {
-        AudioClip GetSeClip(SoundEffect effect);
-        AudioClip GetTrackClip();
+        AudioAsset GetSeAsset(SoundEffect effect);
+        AudioAsset GetTrackAsset();
+        void ClearCache();
     }
 }

@@ -1,13 +1,14 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 
 namespace BeatSaberClone.Domain
 {
     public interface IAudioDataProcessor : IDisposable
     {
         float[] SpectrumData { get; }
+        float[] BandData { get; }
         void UpdateSpectrumData();
         float CalculateAverageSpectrum();
+        float[] GetFrequencyBands();
+        float GetBandEnergy(int bandIndex);
     }
 }

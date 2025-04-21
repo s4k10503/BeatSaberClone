@@ -218,8 +218,8 @@ namespace BeatSaberClone.Presentation
                 return 0f;
             }
 
-            float multiplier = 1f - (angle / _slicedSettings.AllowedAngle);
-            return multiplier;
+            float sliceAccuracy = 1f - (angle / _slicedSettings.AllowedAngle);
+            return sliceAccuracy;
         }
 
         // cutDirection: 0 = Down to Up, 1 = Up to Down, 2 = Right to Left, 3 = Left to Right

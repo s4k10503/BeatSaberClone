@@ -23,7 +23,7 @@ namespace BeatSaberClone.Presentation
         private readonly IViewLogUseCase _viewLogUseCase;
         private readonly IAudioDataProcessingUseCase _audioDataProcessingUseCase;
         private readonly IHapticFeedbackUseCase _hapticFeedback;
-        private readonly ISoundUseCase _soundUseCase;
+        private readonly IAudioUseCase _audioUseCase;
         private readonly IExceptionHandlingUseCase _exceptionHandlingUseCase;
 
         // View
@@ -57,7 +57,7 @@ namespace BeatSaberClone.Presentation
             IScoreUseCase scoreUseCase,
             IViewLogUseCase viewLogUseCase,
             IHapticFeedbackUseCase hapticFeedbackUseCase,
-            ISoundUseCase soundUseCase,
+            IAudioUseCase audioUseCase,
             IAudioDataProcessingUseCase audioDataProcessingUseCase,
             IAudioVisualEffecter audioVisualEffecter,
             IInGameUiView inGameUiView,
@@ -72,7 +72,7 @@ namespace BeatSaberClone.Presentation
             _audioDataProcessingUseCase = audioDataProcessingUseCase;
             _audioVisualEffecter = audioVisualEffecter;
             _hapticFeedback = hapticFeedbackUseCase;
-            _soundUseCase = soundUseCase;
+            _audioUseCase = audioUseCase;
             _inGameUiView = inGameUiView;
             _boxSpawner = boxSpawner;
             _objectSlicerR = objectSlicerR;
@@ -112,7 +112,7 @@ namespace BeatSaberClone.Presentation
             {
                 _currentState = GameState.Playing;
                 await UniTask.Delay(_startDelay, cancellationToken: _cts.Token);
-                _soundUseCase.PlayTrack();
+                _audioUseCase.PlayTrack();
                 _trackStartTime = Time.time;
                 SubscribeToEvents();
             }, _cts.Token);
@@ -154,7 +154,7 @@ namespace BeatSaberClone.Presentation
         {
             await _exceptionHandlingUseCase.SafeExecuteAsync(async () =>
             {
-                if (_soundUseCase.GetTrackIsPlaying())
+                if (_audioUseCase.GetTrackIsPlaying())
                 {
                     float currentTime = Time.time - _trackStartTime;
                     _inGameUiView.UpdateTimer(currentTime);
@@ -196,7 +196,7 @@ namespace BeatSaberClone.Presentation
         {
             if (_trackStartTime == 0)
                 return false;
-            return !_soundUseCase.GetTrackIsPlaying();
+            return !_audioUseCase.GetTrackIsPlaying();
         }
 
         private void EndGame()
@@ -225,10 +225,10 @@ namespace BeatSaberClone.Presentation
                 _notesManagementUseCase.SetDistance(_boxSpawner.SpawnPoints[0], _boxSpawner.PlayerPoint);
                 _notesManagementUseCase.PrepareNotes();
 
-                await _soundUseCase.InitializeAsync(_cts.Token);
-                _soundUseCase.SetTrackVolume(1.0f);
-                _soundUseCase.SetSeVolume(0.25f);
-                await _soundUseCase.SaveVolume(_cts.Token);
+                await _audioUseCase.InitializeAsync(_cts.Token);
+                _audioUseCase.SetTrackVolume(1.0f);
+                _audioUseCase.SetSeVolume(0.25f);
+                await _audioUseCase.SaveVolume(_cts.Token);
             }, _cts.Token);
         }
 
@@ -241,7 +241,7 @@ namespace BeatSaberClone.Presentation
                     _objectSlicerR.InitializeAsync(_cts.Token),
                     _objectSlicerL.InitializeAsync(_cts.Token)
                 );
-                _inGameUiView.SetTotalDuration(_soundUseCase.GetTotalDuration());
+                _inGameUiView.SetTotalDuration(_audioUseCase.GetTotalDuration());
             }, _cts.Token);
         }
 
@@ -315,7 +315,7 @@ namespace BeatSaberClone.Presentation
                 return;
 
             // At the same time, execute sound playback, processing of target objects and haptic feedback
-            var playSoundTask = _soundUseCase.PlaySoundEffect(SoundEffect.Slice, _cts.Token);
+            var playSoundTask = _audioUseCase.PlaySoundEffect(SoundEffect.Slice, _cts.Token);
             var feedbackTask = _hapticFeedback.TriggerFeedback(
                 slicer.Side == SlicerSide.Left ? XRNode.LeftHand : XRNode.RightHand,
                 _cts.Token);
@@ -330,9 +330,9 @@ namespace BeatSaberClone.Presentation
             UniTask.WhenAll(playSoundTask, feedbackTask, sliceTask).Forget();
 
             int slicerId = (slicer.Side == SlicerSide.Left) ? 0 : 1;
-            float scoreMultiplier = boxView.CheckSliceDirection(slicer.Velocity, slicerId);
-            int sliceScore = _scoreUseCase.UpdateScore(scoreMultiplier);
-            _scoreUseCase.UpdateCombo(scoreMultiplier);
+            float sliceAccuracy = boxView.CheckSliceDirection(slicer.Velocity, slicerId);
+            int sliceScore = _scoreUseCase.UpdateScore(sliceAccuracy);
+            _scoreUseCase.UpdateCombo(sliceAccuracy);
 
             // Display score based on box position
             Vector3 displayPosition = hit.transform.position;
