@@ -15,7 +15,7 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.2473684, g: 0.7105263, b: 1, a: 1}
+  m_FogColor: {r: 0, g: 0.2627451, b: 0.7490196, a: 1}
   m_FogMode: 1
   m_FogDensity: 0.0004
   m_LinearFogStart: 0
@@ -1045,7 +1045,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1131962009}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b55af113d716fd4e8c7e9c8e361d2a9, type: 3}
+  m_Script: {fileID: 11500000, guid: 95fd5ffe884c5d64a9042ef6a1ef0c21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1295260854 stripped
@@ -1341,10 +1341,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3291000020651977332, guid: 98040e0aea814fd47ae1b8a9105115e0, type: 3}
-      propertyPath: _bindType
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 6710284353285601753, guid: 98040e0aea814fd47ae1b8a9105115e0, type: 3}
       propertyPath: m_Name
       value: SaberLeft
@@ -1571,7 +1567,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1703361098}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f14f231d7e8993469d4098e13f49d9c, type: 3}
+  m_Script: {fileID: 11500000, guid: 875cc701f47b0114aa315f8d8f6a4fab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _velocityEstimatorSettings: {fileID: 11400000, guid: 50915b5665616d44a93517c0b0f127d6, type: 2}
@@ -1729,23 +1725,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 1989966629}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a17aeafe0f9397343b9800754d67dda1, type: 3}
+  m_Script: {fileID: 11500000, guid: eb75f3468912b71479a92720f801adca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _platformSpecificPrefab: {fileID: 6852608912492260200, guid: 1af6b334ac250d94b89eae729a2e0fe1, type: 3}
   _luminousMaterial: {fileID: 2100000, guid: cfbc097d0acd0b144af5e346339c4665, type: 2}
   _smokeMaterial: {fileID: 2100000, guid: 9aa1fd38af80d034c89b267ae41f7fe1, type: 2}
-  _materialBaseColor: {r: 0, g: 0, b: 0, a: 0}
-  _materialFlashColor: {r: 0, g: 0, b: 0, a: 0}
-  _lightBaseColor: {r: 0, g: 0, b: 0, a: 0}
-  _lightFlashColor: {r: 0, g: 0, b: 0, a: 0}
-  _fogBaseColor: {r: 0, g: 0, b: 0, a: 0}
-  _fogFlashColor: {r: 0, g: 0, b: 0, a: 0}
   _directionalLight: {fileID: 1128154606}
   _pointlLight: {fileID: 1689849643}
   _parentPillarObjectL: {fileID: 991038074}
   _parentPillarObjectR: {fileID: 1295260854}
   _parentRingObject: {fileID: 1669118240}
-  _platformSpecificPrefab: {fileID: 6852608912492260200, guid: 1af6b334ac250d94b89eae729a2e0fe1, type: 3}
+  _laserBeams: []
+  _fanLasers:
+  - {fileID: 0}
+  - {fileID: 0}
+  _animationControllers:
+  - {fileID: 0}
+  - {fileID: 0}
+  _laserIntensityMultiplier: 1
+  _syncLaserIntensity: 1
+  _syncLaserColor: 0
 --- !u!1001 &2018739805
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1754,10 +1754,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 249728325}
     m_Modifications:
-    - target: {fileID: 1145938403041059584, guid: cce22fe1932a43449b5445fa18f8581c, type: 3}
-      propertyPath: _bindType
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 3148469715123180796, guid: cce22fe1932a43449b5445fa18f8581c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1866,7 +1862,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2044860547}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a7641846e1365342961c8f2f2385918, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ffe607108c80c54cb63a19f34dc0704, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _particleSpawnLeft: {fileID: 2020021810657464489, guid: 9fa0dccd181c4744d961be5ed62a9273, type: 3}
@@ -1931,7 +1927,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2445667152887431409}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fefdbce174786047a20b893702447f3, type: 3}
+  m_Script: {fileID: 11500000, guid: 20f87ac6c86cfba449bf00541bea27f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _canvas: {fileID: 984405641}
@@ -1940,10 +1936,14 @@ MonoBehaviour:
   _comboTMP: {fileID: 570124821}
   _comboMultiplierTMP: {fileID: 77171777}
   _sliceScorePrefab: {fileID: 47947021082231296, guid: 0dc52dd97f6187d4993bdf2b22f3de1b, type: 3}
-  _sliceScorePoolSize: 10
+  _spawnForwardOffset: 5
+  _spawnDownwardOffset: 1
+  _floatForwardDistance: 1.5
   _sliceScoreDisplayDuration: 1
-  _sliceScoreForwardOffset: 5
-  _sliceScoreUpwardOffset: 0.5
+  _sliceScorePoolSize: 10
+  _comboAnimDuration: 0.5
+  _comboShakeStrengthX: 25
+  _comboMoveDistanceZ: -0.35
   _progressBar: {fileID: 1001699379}
 --- !u!1001 &4116905505299885746
 PrefabInstance:

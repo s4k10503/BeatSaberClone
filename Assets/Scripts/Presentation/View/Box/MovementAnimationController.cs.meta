@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: 0f14f231d7e8993469d4098e13f49d9c
+guid: 86bb70746f675ff44b53d4cb8e775311
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - _velocityEstimatorSettings: {fileID: 11400000, guid: 50915b5665616d44a93517c0b0f127d6, type: 2}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

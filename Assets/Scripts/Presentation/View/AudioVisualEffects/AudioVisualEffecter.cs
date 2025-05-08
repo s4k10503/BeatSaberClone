@@ -8,27 +8,38 @@ namespace BeatSaberClone.Presentation
 {
     public sealed class AudioVisualEffecter : MonoBehaviour, IAudioVisualEffecter
     {
+        [Header("Platform Specific Settings")]
+        [SerializeField] private GameObject _platformSpecificPrefab;
+
         [Header("Material Settings")]
         [SerializeField] private Material _luminousMaterial;
         [SerializeField] private Material _smokeMaterial;
 
-        [Header("Color Settings")]
-        [SerializeField] private Color _materialBaseColor;
-        [SerializeField] private Color _materialFlashColor;
-        [SerializeField] private Color _lightBaseColor;
-        [SerializeField] private Color _lightFlashColor;
-        [SerializeField] private Color _fogBaseColor;
-        [SerializeField] private Color _fogFlashColor;
-
-        [Header("Level Settings")]
+        [Header("Light Settings")]
         [SerializeField] private Light _directionalLight;
         [SerializeField] private Light _pointlLight;
+
+        [Header("Pillar Settings")]
         [SerializeField] private GameObject _parentPillarObjectL;
         [SerializeField] private GameObject _parentPillarObjectR;
+
+        [Header("Ring Settings")]
         [SerializeField] private GameObject _parentRingObject;
 
-        [Header("Platform Specific Settings")]
-        [SerializeField] private GameObject _platformSpecificPrefab;
+        [Header("Laser System Settings")]
+        [SerializeField] private List<LaserBeam> _laserBeams = new();
+        [SerializeField] private List<FanLaserController> _fanLasers = new();
+        [SerializeField] private List<LaserAnimationController> _animationControllers = new();
+        [SerializeField, Range(0f, 1f)] private float _laserIntensityMultiplier = 1f;
+        [SerializeField] private bool _syncLaserIntensity = true;
+        [SerializeField] private bool _syncLaserColor = false;
+
+        private Color _materialBaseColor;
+        private Color _materialFlashColor;
+        private Color _lightBaseColor;
+        private Color _lightFlashColor;
+        private Color _fogBaseColor;
+        private Color _fogFlashColor;
 
         private AudioVisualEffectParameters _audioVisualEffectParameters;
 
@@ -104,6 +115,7 @@ namespace BeatSaberClone.Presentation
                 SetGlobalColors(false);
                 InitializeMaterial(_luminousMaterial, isLuminous: true);
                 InitializeMaterial(_smokeMaterial, isLuminous: false);
+                ApplyLaserMaterialToAll();
 
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX
                 if (_platformSpecificPrefab != null)
@@ -153,6 +165,11 @@ namespace BeatSaberClone.Presentation
                 _directionalLight = null;
                 _pointlLight = null;
                 _parentRingObject = null;
+
+                // レーザーシステムの参照をクリア
+                _laserBeams.Clear();
+                _fanLasers.Clear();
+                _animationControllers.Clear();
             }
             catch (Exception ex)
             {
@@ -242,6 +259,7 @@ namespace BeatSaberClone.Presentation
 
                 UpdatePillarScales(spectrumData);
                 UpdateRingRotation(intensity);
+                UpdateLaserSystem();
             }
             catch (Exception ex)
             {
@@ -433,5 +451,167 @@ namespace BeatSaberClone.Presentation
         }
 
         #endregion
+
+        #region Laser System Update
+
+        private void UpdateLaserSystem()
+        {
+            try
+            {
+                if (_syncLaserIntensity || _syncLaserColor)
+                {
+                    float laserIntensity = Mathf.Clamp01(_laserIntensityMultiplier);
+                    UpdateLaserBeams(laserIntensity);
+                    UpdateFanLasers(laserIntensity);
+                }
+
+                // Ensure animation controllers are actually playing
+                foreach (var animController in _animationControllers)
+                {
+                    if (animController == null) continue;
+
+                    // If the controller has an animation type set but isn't playing, start it
+                    if (animController.GetAnimationType != BeatSaberClone.Presentation.LaserAnimationController.AnimationType.None &&
+                        !animController.IsPlaying)
+                    {
+                        animController.Play();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateLaserSystem: " + ex);
+            }
+        }
+
+        private void UpdateLaserBeams(float intensity)
+        {
+            try
+            {
+                if (_laserBeams.Count == 0) return;
+
+                // レーザーマテリアルに発光色を設定（ベース色または点滅色）
+                if (_luminousMaterial != null)
+                {
+                    // マテリアルのエミッション色を設定
+                    if (_luminousMaterial.HasProperty("_EmissionColor"))
+                    {
+                        // 現在の状態（通常またはフラッシュ）に基づいて色を選択
+                        Color baseColor = _isFlashActive ? _materialFlashColor : _materialBaseColor;
+
+                        // 強度を適用（音楽同期が有効な場合）
+                        float appliedIntensity = _syncLaserIntensity ? intensity * _laserIntensityMultiplier : 1.0f;
+
+                        // 正規化された色に強度を掛けてエミッション色を設定
+                        Color emission = NormalizeColor(baseColor) * _luminousEmission.Intensity * appliedIntensity;
+                        _luminousMaterial.SetColor("_EmissionColor", emission);
+                        _luminousMaterial.EnableKeyword("_EMISSION");
+                    }
+                }
+
+                // 各LineRendererの色を設定
+                foreach (var laser in _laserBeams)
+                {
+                    if (laser == null) continue;
+
+                    // LineRendererを直接取得
+                    LineRenderer lineRenderer = laser.GetLineRenderer();
+                    if (lineRenderer == null) continue;
+
+                    // 状態に合わせて色を設定（マテリアルは共有済み）
+                    Color color = _isFlashActive ? _materialFlashColor : _materialBaseColor;
+                    lineRenderer.startColor = color;
+                    lineRenderer.endColor = color;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateLaserBeams: " + ex);
+            }
+        }
+
+        private void UpdateFanLasers(float intensity)
+        {
+            try
+            {
+                foreach (var fanLaser in _fanLasers)
+                {
+                    if (fanLaser == null) continue;
+
+                    // ファンの全ビームを取得して個別に更新
+                    List<LaserBeam> beams = fanLaser.GetLaserBeams();
+                    foreach (var beam in beams)
+                    {
+                        if (beam == null) continue;
+
+                        // LineRendererを直接取得
+                        LineRenderer lineRenderer = beam.GetLineRenderer();
+                        if (lineRenderer == null) continue;
+
+                        // 状態に合わせて色を設定（マテリアルは共有済み）
+                        Color color = _isFlashActive ? _materialFlashColor : _materialBaseColor;
+                        lineRenderer.startColor = color;
+                        lineRenderer.endColor = color;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Exception in UpdateFanLasers: " + ex);
+            }
+        }
+
+        #endregion
+
+
+        // 単一のレーザービームにマテリアルを適用
+        private void ApplyMaterialToLaserBeam(LaserBeam laser)
+        {
+            if (laser == null || _luminousMaterial == null) return;
+
+            try
+            {
+                LineRenderer lineRenderer = laser.GetLineRenderer();
+                if (lineRenderer != null)
+                {
+                    lineRenderer.sharedMaterial = _luminousMaterial;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to apply material to laser: {ex.Message}");
+            }
+        }
+
+        // ファンレーザーの全ビームにマテリアルを適用
+        private void ApplyMaterialToFanLaser(FanLaserController fanLaser)
+        {
+            if (fanLaser == null) return;
+
+            List<LaserBeam> beams = fanLaser.GetLaserBeams();
+            foreach (var beam in beams)
+            {
+                if (beam != null)
+                {
+                    ApplyMaterialToLaserBeam(beam);
+                }
+            }
+        }
+
+        // すべてのレーザーに共有マテリアルを適用
+        private void ApplyLaserMaterialToAll()
+        {
+            // 単一レーザーに適用
+            foreach (var laser in _laserBeams)
+            {
+                ApplyMaterialToLaserBeam(laser);
+            }
+
+            // ファンレーザーに適用
+            foreach (var fanLaser in _fanLasers)
+            {
+                ApplyMaterialToFanLaser(fanLaser);
+            }
+        }
     }
 }
