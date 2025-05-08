@@ -1,0 +1,227 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &761180707876585546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1821054564129273493}
+  m_Layer: 0
+  m_Name: LaserSystemGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1821054564129273493
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761180707876585546}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 76.66666}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4253833723307056401}
+  - {fileID: 5571683060822937601}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4832697641945200606
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4253833723307056401}
+  - component: {fileID: 78763097119222117}
+  - component: {fileID: 7492921088847793724}
+  m_Layer: 0
+  m_Name: FanLaser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4253833723307056401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4832697641945200606}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
+  m_LocalPosition: {x: 35, y: -2, z: 0.5}
+  m_LocalScale: {x: 1, y: 0.5, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1821054564129273493}
+  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+--- !u!114 &78763097119222117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4832697641945200606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23abaafed11019e4fb3e993ce8cebee9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _beamCount: 8
+  _spreadAngle: 90
+  _enabled: 1
+  _animationMode: 3
+  _width: 0.1
+  _maxLength: 100
+  _centerDirection: {x: 0, y: 0, z: -1}
+  _laserMaterial: {fileID: 2100000, guid: cfbc097d0acd0b144af5e346339c4665, type: 2}
+--- !u!114 &7492921088847793724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4832697641945200606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed8df078ab1f5041a2e9ac0df5fdb47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animationType: 2
+  _playOnStart: 1
+  _minXRotationAngle: -180
+  _maxXRotationAngle: 180
+  _minYRotationAngle: -180
+  _maxYRotationAngle: 180
+  _minZRotationAngle: -180
+  _maxZRotationAngle: 180
+  _useAngleLimits: 1
+  _xAxisInfluence: 1
+  _yAxisInfluence: 1
+  _zAxisInfluence: 1
+  _rotationSpeed: 1
+  _animateXAxis: 1
+  _animateYAxis: 1
+  _animateZAxis: 1
+  _xAxisRotationDirection: 1
+  _yAxisRotationDirection: 1
+  _zAxisRotationDirection: 1
+  _randomizeBeamRotations: 1
+  _maxBeamRotationAngle: 0
+  _beamPhaseVariance: 10
+  _spreadAnimType: 0
+  _spreadAnimSpeed: 1
+  _minSpreadAngle: 0
+  _maxSpreadAngle: 180
+  _combineSpreadWithRotation: 1
+  _randomChangeInterval: 0.5
+  _useGroupAnimation: 0
+  _targetLaserBeam: {fileID: 0}
+  _targetFanLaser: {fileID: 78763097119222117}
+--- !u!1 &5328586674954355011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5571683060822937601}
+  - component: {fileID: 1715827806568485167}
+  - component: {fileID: 4866773879041173734}
+  m_Layer: 0
+  m_Name: FanLaser (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5571683060822937601
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5328586674954355011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
+  m_LocalPosition: {x: -35, y: -2, z: 0.5}
+  m_LocalScale: {x: 1, y: 0.5, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1821054564129273493}
+  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+--- !u!114 &1715827806568485167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5328586674954355011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23abaafed11019e4fb3e993ce8cebee9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _beamCount: 8
+  _spreadAngle: 90
+  _enabled: 1
+  _animationMode: 3
+  _width: 0.1
+  _maxLength: 100
+  _centerDirection: {x: 0, y: 0, z: -1}
+  _laserMaterial: {fileID: 2100000, guid: cfbc097d0acd0b144af5e346339c4665, type: 2}
+--- !u!114 &4866773879041173734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5328586674954355011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed8df078ab1f5041a2e9ac0df5fdb47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animationType: 2
+  _playOnStart: 1
+  _minXRotationAngle: -180
+  _maxXRotationAngle: 180
+  _minYRotationAngle: -180
+  _maxYRotationAngle: 180
+  _minZRotationAngle: -180
+  _maxZRotationAngle: 180
+  _useAngleLimits: 1
+  _xAxisInfluence: 1
+  _yAxisInfluence: 1
+  _zAxisInfluence: 1
+  _rotationSpeed: 1
+  _animateXAxis: 1
+  _animateYAxis: 1
+  _animateZAxis: 1
+  _xAxisRotationDirection: 0
+  _yAxisRotationDirection: 0
+  _zAxisRotationDirection: 0
+  _randomizeBeamRotations: 1
+  _maxBeamRotationAngle: 0
+  _beamPhaseVariance: 10
+  _spreadAnimType: 0
+  _spreadAnimSpeed: 1
+  _minSpreadAngle: 0
+  _maxSpreadAngle: 180
+  _combineSpreadWithRotation: 1
+  _randomChangeInterval: 0.5
+  _useGroupAnimation: 0
+  _targetLaserBeam: {fileID: 0}
+  _targetFanLaser: {fileID: 1715827806568485167}

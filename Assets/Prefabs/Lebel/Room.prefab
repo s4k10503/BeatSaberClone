@@ -258,6 +258,7 @@ GameObject:
   - component: {fileID: 7777652139622478091}
   - component: {fileID: 3493641552928087659}
   - component: {fileID: 7134785196507526487}
+  - component: {fileID: 7971701509070376842}
   m_Layer: 0
   m_Name: Top panel
   m_TagString: Untagged
@@ -330,6 +331,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &7971701509070376842
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6257139163424071552}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0000002, y: 1.0000002, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6393430547008279364
 GameObject:
   m_ObjectHideFlags: 0

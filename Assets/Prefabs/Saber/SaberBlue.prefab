@@ -72,11 +72,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5553884058724082860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f14f231d7e8993469d4098e13f49d9c, type: 3}
+  m_Script: {fileID: 11500000, guid: 875cc701f47b0114aa315f8d8f6a4fab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _velocityEstimatorSettings: {fileID: 11400000, guid: 50915b5665616d44a93517c0b0f127d6, type: 2}
-  estimateOnAwake: 0
 --- !u!1 &5648816542033626833
 GameObject:
   m_ObjectHideFlags: 0
@@ -267,10 +266,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 6710284353285601753}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aff5f654419c1fb4ab417963ae765714, type: 3}
+  m_Script: {fileID: 11500000, guid: 5871e9e9a25a4db4cace897a9ece1bcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _slicerSide: 0
+  _slicerSide: 1
   _slicableLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -280,7 +279,6 @@ MonoBehaviour:
   _tip: {fileID: 5154340676360960378}
   _base: {fileID: 5553884058724082860}
   _meshParent: {fileID: 6932743249574864583}
-  _slicerSettings: {fileID: 11400000, guid: d5762c379ddd94c43a6a7268d5392326, type: 2}
   _particleEffectSettings: {fileID: 11400000, guid: 45507438792c4d743a38b0831fc1e28e, type: 2}
 --- !u!114 &1145938403041059584
 MonoBehaviour:
@@ -299,7 +297,7 @@ MonoBehaviour:
   _identifier: RightSlicer
   _useSceneContext: 0
   _context: {fileID: 0}
-  _bindType: 0
+  _bindType: 1
 --- !u!1 &6932743249574864583
 GameObject:
   m_ObjectHideFlags: 0

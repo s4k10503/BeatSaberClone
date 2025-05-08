@@ -2,7 +2,6 @@ using UnityEngine;
 using TMPro;
 using UniRx;
 using System;
-using System.Collections.Generic;
 using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.Pool;
@@ -18,10 +17,18 @@ namespace BeatSaberClone.Presentation
         [SerializeField] private TextMeshProUGUI _comboTMP;
         [SerializeField] private TextMeshProUGUI _comboMultiplierTMP;
         [SerializeField] private TextMeshProUGUI _sliceScorePrefab;
-        [SerializeField] private int _sliceScorePoolSize = 10;
+
+        [Header("Slice Score Animation")]
+        [SerializeField] private float _spawnForwardOffset = 2.5f;
+        [SerializeField] private float _spawnDownwardOffset = 1f;
+        [SerializeField] private float _floatForwardDistance = 1.5f;
         [SerializeField] private float _sliceScoreDisplayDuration = 1.0f;
-        [SerializeField] private float _sliceScoreForwardOffset = 5f;
-        [SerializeField] private float _sliceScoreUpwardOffset = 0.5f;
+        [SerializeField] private int _sliceScorePoolSize = 10;
+
+        [Header("Combo Multiplier Animation")]
+        [SerializeField] private float _comboAnimDuration = 1.0f;
+        [SerializeField] private float _comboShakeStrengthX = 25f;
+        [SerializeField] private float _comboMoveDistanceZ = -1.0f;
 
         [Header("Images")]
         [SerializeField] private Image _progressBar;
@@ -29,11 +36,18 @@ namespace BeatSaberClone.Presentation
         private float _totalDuration;
         private ObjectPool<TextMeshProUGUI> _sliceScorePool;
 
-        private Subject<string> _onErrorOccurred = new Subject<string>();
+        private Vector3 _comboMultiplierOriginalLocalPos;
+        private float _previousComboMultiplier = 1f;
+
+        private Subject<string> _onErrorOccurred = new();
         public IObservable<string> OnErrorOccurred => _onErrorOccurred.AsObservable();
 
         private void Awake()
         {
+            // Cache initial local location
+            if (_comboMultiplierTMP != null)
+                _comboMultiplierOriginalLocalPos = _comboMultiplierTMP.transform.localPosition;
+
             InitializeSliceScorePool();
         }
 
@@ -151,7 +165,48 @@ namespace BeatSaberClone.Presentation
                 LogError("_comboMultiplierTMP is not assigned.");
                 return;
             }
+
             _comboMultiplierTMP.text = $"x{comboMultiplier}";
+
+            if (comboMultiplier < _previousComboMultiplier)
+            {
+                // If a Tween is still playing, kill it
+                _comboMultiplierTMP.transform.DOKill();
+                // Reset position only
+                _comboMultiplierTMP.transform.localPosition = _comboMultiplierOriginalLocalPos;
+            }
+            else
+            {
+                // Destroy existing Tween
+                _comboMultiplierTMP.transform.DOKill();
+
+                // Sequence creation
+                var shake = _comboMultiplierTMP.transform
+                    .DOShakePosition(
+                        duration: _comboAnimDuration,
+                        strength: new Vector3(_comboShakeStrengthX, 0f, 0f),
+                        vibrato: 30,
+                        randomness: 0,
+                        snapping: false,
+                        fadeOut: true)
+                    .SetEase(Ease.Linear);
+
+                var moveZ = _comboMultiplierTMP.transform
+                    .DOLocalMoveZ(_comboMoveDistanceZ, _comboAnimDuration * 0.5f)
+                    .SetEase(Ease.InOutQuad)
+                    .SetLoops(2, LoopType.Yoyo);
+
+                DOTween.Sequence()
+                    .Join(shake)
+                    .Join(moveZ)
+                    .OnComplete(() =>
+                    {
+                        // After animation ends, reset to initial position
+                        _comboMultiplierTMP.transform.localPosition = _comboMultiplierOriginalLocalPos;
+                    });
+
+                _previousComboMultiplier = comboMultiplier;
+            }
         }
 
         public void UpdateComboProgress(float progress)
@@ -179,13 +234,14 @@ namespace BeatSaberClone.Presentation
             var sliceScoreText = _sliceScorePool.Get();
 
             // Adjust the display position in world space
-            var tmpPosition = displayPosition + Vector3.forward * _sliceScoreForwardOffset;
+            var tmpPosition = displayPosition + (Vector3.forward * _spawnForwardOffset) + (Vector3.down * _spawnDownwardOffset);
             sliceScoreText.transform.position = tmpPosition;
+
             sliceScoreText.text = score == 0 ? "MISS" : $"{score}";
             sliceScoreText.alpha = 1f;
 
             // Rise and fade out with Tween
-            sliceScoreText.transform.DOMove(tmpPosition + Vector3.up * _sliceScoreUpwardOffset, _sliceScoreDisplayDuration)
+            sliceScoreText.transform.DOMove(tmpPosition + (Vector3.forward * _floatForwardDistance), _sliceScoreDisplayDuration)
                 .SetEase(Ease.OutQuad);
             sliceScoreText.DOFade(0f, _sliceScoreDisplayDuration)
                 .SetEase(Ease.InQuad)

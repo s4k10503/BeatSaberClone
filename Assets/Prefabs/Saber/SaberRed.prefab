@@ -112,11 +112,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5553884058724082860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f14f231d7e8993469d4098e13f49d9c, type: 3}
+  m_Script: {fileID: 11500000, guid: 875cc701f47b0114aa315f8d8f6a4fab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _velocityEstimatorSettings: {fileID: 11400000, guid: 50915b5665616d44a93517c0b0f127d6, type: 2}
-  estimateOnAwake: 0
 --- !u!1 &5648816542033626833
 GameObject:
   m_ObjectHideFlags: 0
@@ -235,7 +234,7 @@ GameObject:
   - component: {fileID: 3148469715123180796}
   - component: {fileID: 5063267429021836070}
   - component: {fileID: 3007366358222059014}
-  - component: {fileID: 4362434957634339628}
+  - component: {fileID: 3347646926615247230}
   - component: {fileID: 3291000020651977332}
   m_Layer: 8
   m_Name: SaberRed
@@ -298,7 +297,7 @@ CapsuleCollider:
   m_Height: 2.5
   m_Direction: 1
   m_Center: {x: 0, y: 1.15, z: 0}
---- !u!114 &4362434957634339628
+--- !u!114 &3347646926615247230
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -307,7 +306,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6710284353285601753}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aff5f654419c1fb4ab417963ae765714, type: 3}
+  m_Script: {fileID: 11500000, guid: 5871e9e9a25a4db4cace897a9ece1bcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _slicerSide: 0
@@ -320,7 +319,6 @@ MonoBehaviour:
   _tip: {fileID: 5154340676360960378}
   _base: {fileID: 5553884058724082860}
   _meshParent: {fileID: 678196475455708052}
-  _slicerSettings: {fileID: 11400000, guid: d5762c379ddd94c43a6a7268d5392326, type: 2}
   _particleEffectSettings: {fileID: 11400000, guid: 45507438792c4d743a38b0831fc1e28e, type: 2}
 --- !u!114 &3291000020651977332
 MonoBehaviour:
@@ -335,7 +333,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _components:
-  - {fileID: 4362434957634339628}
+  - {fileID: 3347646926615247230}
   _identifier: LeftSlicer
   _useSceneContext: 0
   _context: {fileID: 0}
